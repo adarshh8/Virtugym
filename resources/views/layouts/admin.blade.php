@@ -6,9 +6,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>VirtuGym Admin - @yield('title')</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+    <script src="/js/virtugym-icons.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
+        .vg-inline-icon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; margin-right: .35em; stroke-width: 2.4; }
         body { background: #f3f4f6; }
         .sidebar { background: linear-gradient(135deg, #1e1b4b, #4c1d95); }
         .sidebar-item:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); transition: all 0.3s; }

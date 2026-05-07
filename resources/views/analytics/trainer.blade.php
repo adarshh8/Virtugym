@@ -69,9 +69,9 @@
         </div>
     </div>
     
-    <div class="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6">
-        <h2 class="text-lg font-bold mb-2">💡 Pro Tip</h2>
-        <p class="text-gray-600">Keep your calendar updated and respond to booking requests quickly to maintain a high rating!</p>
+    <div class="mt-6 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg p-6">
+        <h2 class="text-lg font-bold mb-2 text-purple-300">💡 Pro Tip</h2>
+        <p class="text-gray-300">Keep your calendar updated and respond to booking requests quickly to maintain a high rating!</p>
     </div>
 </div>
 @endsection

@@ -7,8 +7,11 @@
     <title>VirtuGym - Virtual Personal Trainer</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+    <script src="/js/virtugym-icons.js" defer></script>
     <style>
         *{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0;}
+        .vg-inline-icon{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;margin-right:.35em;stroke-width:2.4;}
         html,body{height:100%;}
         body{
             min-height:100vh;
@@ -38,6 +41,36 @@
         
         .form-panel{position:relative;z-index:10;min-height:100vh;width:100%;margin-left:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2.5rem 1.5rem;overflow-y:auto;}
         @media(min-width:900px){.form-panel{margin-left:50%;width:50%;}}
+
+        .auth-logo-wrap{text-align:center;margin-bottom:1.25rem;}
+        .auth-logo{
+            width:104px;
+            height:104px;
+            margin:0 auto;
+            border-radius:50%;
+            background:rgba(255,255,255,.94);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            overflow:hidden;
+            box-shadow:0 0 30px rgba(139,92,246,.42),0 14px 32px rgba(0,0,0,.22);
+        }
+        .auth-logo img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;}
+        .auth-logo-fallback{
+            background:linear-gradient(135deg,#8b5cf6,#ec4899);
+            color:white;
+            font-size:2rem;
+            font-weight:900;
+        }
+        .register-page .form-panel{justify-content:flex-start;padding-top:1.35rem;padding-bottom:1.35rem;}
+        .register-page .auth-logo-wrap{margin-bottom:.75rem;}
+        .register-page .auth-logo{width:88px;height:88px;}
+        .register-page .brand-sub{margin-bottom:.15rem;}
+        .register-page .card3d{margin-top:.85rem;}
+        @media(max-width:520px){
+            .auth-logo{width:92px;height:92px;}
+            .register-page .auth-logo{width:78px;height:78px;}
+        }
         
         @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
         @keyframes lp{0%,100%{box-shadow:0 0 35px rgba(139,92,246,.5);}50%{box-shadow:0 0 55px rgba(236,72,153,.6);}}
@@ -76,7 +109,7 @@
         @keyframes bk{0%,100%{opacity:1}50%{opacity:.2}}
     </style>
 </head>
-<body>
+<body class="{{ request()->routeIs('register') ? 'register-page' : '' }}">
     <canvas id="stars"></canvas>
     <div class="orb o1"></div>
     <div class="orb o2"></div>
@@ -96,20 +129,16 @@
     </div>
 
     <div class="form-panel">
-        <!-- SIMPLE WORKING LOGO - NO RINGS -->
-        <div style="text-align: center; margin-bottom: 1.5rem;">
-            <?php 
-                $logoPath = public_path('images/logo.png');
-                if(file_exists($logoPath)) {
-                    echo '<div style="width: 100px; height: 100px; margin: 0 auto; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 0 30px rgba(139,92,246,.5);">
-                        <img src="/images/logo.png" alt="VirtuGym Logo" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>';
-                } else {
-                    echo '<div style="width: 100px; height: 100px; margin: 0 auto; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6, #ec4899); display: flex; align-items: center; justify-content: center;">
-                        <span style="font-size: 2rem; font-weight: 900; color: white;">VG</span>
-                    </div>';
-                }
-            ?>
+        <div class="auth-logo-wrap">
+            @if(file_exists(public_path('images/logo.png')))
+                <div class="auth-logo">
+                    <img src="/images/logo.png" alt="VirtuGym Logo">
+                </div>
+            @else
+                <div class="auth-logo auth-logo-fallback">
+                    VG
+                </div>
+            @endif
         </div>
         
         <div class="brand-name">VIRTU GYM</div>

@@ -8,8 +8,11 @@
 <meta name="description" content="AI-powered virtual personal trainer. Personalized workouts, real-time analytics, 3D progress tracking.">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+<script src="/js/virtugym-icons.js" defer></script>
 <style>
 *{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0;}
+.vg-inline-icon{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;margin-right:.35em;stroke-width:2.4;}
 body{background:#08081a;min-height:100vh;overflow-x:hidden;color:#fff;}
 ::-webkit-scrollbar{width:6px;}
 ::-webkit-scrollbar-thumb{background:linear-gradient(#8b5cf6,#ec4899);border-radius:6px;}
