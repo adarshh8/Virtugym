@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Booking;
 use App\Models\Workout;
+use App\Support\ActivityStats;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -37,8 +38,21 @@ class TraineeDashboardController extends Controller
         // FIXED: Get ALL trainers (not just verified)
         $availableTrainers = User::where('role', 'trainer')
             ->get();  // Removed the is_verified condition temporarily
+
+        $activityStats = ActivityStats::forUser((string) $trainee->id);
+        $streak = $activityStats['streak'];
+        $activityCalendar = $activityStats['calendar'];
+        $activityTotal = $activityStats['total'];
         
-        return view('trainee.dashboard', compact('stats', 'recentWorkouts', 'upcomingSessions', 'availableTrainers'));
+        return view('trainee.dashboard', compact(
+            'stats',
+            'recentWorkouts',
+            'upcomingSessions',
+            'availableTrainers',
+            'streak',
+            'activityCalendar',
+            'activityTotal'
+        ));
     }
     
     public function trainers()

@@ -656,6 +656,9 @@
                 <a href="{{ route('bookings.index') }}" class="sidebar-item {{ request()->routeIs('bookings.*') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="calendar-days"></i></span><span>My Sessions</span>
                 </a>
+                <a href="{{ route('music.index') }}" class="sidebar-item {{ request()->routeIs('music.*') ? 'active' : '' }}">
+                    <span class="s-icon"><i data-lucide="music"></i></span><span>Workout Music</span>
+                </a>
                 @endif
                 @endif
             </nav>
@@ -691,8 +694,8 @@
             <!-- Streak Widget -->
             <div class="streak-widget">
                 <div style="font-size:1.5rem;margin-bottom:4px;"><i data-lucide="flame" style="width:1.1em;height:1.1em;margin:0 auto;"></i></div>
-                <div class="s-num" id="streakCount">0</div>
-                <div class="s-lbl">Day Streak</div>
+                <div class="s-num" id="streakCount">{{ $layoutStreak ?? 0 }}</div>
+                <div class="s-lbl">24h Streak</div>
             </div>
         </div>
     </aside>

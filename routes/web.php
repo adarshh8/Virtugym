@@ -12,16 +12,17 @@ use App\Http\Controllers\WorkoutController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\AIController;
+use App\Http\Controllers\MusicController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('home');
-})->name('home');
+})->middleware('track.activity')->name('home');
 
 require __DIR__.'/auth.php';
 
 // ============ AUTHENTICATED ROUTES ============
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'track.activity'])->group(function () {
     
     // Dashboard Redirect
     Route::get('/dashboard', function () {
@@ -60,6 +61,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Progress
     Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
+
+    // Music
+    Route::get('/music', [MusicController::class, 'index'])->name('music.index');
+    Route::get('/music/search', [MusicController::class, 'search'])->name('music.search');
     
     // Profile
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');

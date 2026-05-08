@@ -22,6 +22,8 @@
         </div>
     </div>
 
+    <x-activity-calendar :calendar="$activityCalendar ?? collect()" :total="$activityTotal ?? 0" :streak="$streak ?? 0" />
+
     {{-- Stats Cards --}}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem;margin-bottom:2rem;">
         {{-- Total Workouts --}}

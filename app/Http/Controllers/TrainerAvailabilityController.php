@@ -27,7 +27,6 @@ class TrainerAvailabilityController extends Controller
             'day_of_week' => 'required|integer|min:0|max:6',
             'start_time' => 'required',
             'end_time' => 'required',
-            'is_recurring' => 'boolean'
         ]);
         
         if ($validator->fails()) {
@@ -39,7 +38,7 @@ class TrainerAvailabilityController extends Controller
             'day_of_week' => (int)$request->day_of_week,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
-            'is_recurring' => $request->is_recurring ?? true,
+            'is_recurring' => false,
             'is_booked' => false
         ]);
         
@@ -63,16 +62,30 @@ class TrainerAvailabilityController extends Controller
         
         $slots = TrainerAvailability::where('trainer_id', $trainer_id)
             ->where('day_of_week', $dayOfWeek)
-            ->where('is_booked', false)
             ->get();
+
+        $bookedTimes = Booking::where('trainer_id', $trainer_id)
+            ->whereDate('session_date', $date)
+            ->where('status', 'confirmed')
+            ->get()
+            ->map(function ($booking) {
+                return date('H:i', strtotime($booking->session_date));
+            })
+            ->all();
         
         \Log::info('Found ' . $slots->count() . ' slots');
         
         $availableSlots = [];
         foreach ($slots as $slot) {
+            $startTime = date('H:i', strtotime($slot->start_time));
+
+            if (in_array($startTime, $bookedTimes, true)) {
+                continue;
+            }
+
             $availableSlots[] = [
                 'id' => (string)$slot->_id,
-                'start_time' => date('H:i', strtotime($slot->start_time)),
+                'start_time' => $startTime,
                 'end_time' => date('H:i', strtotime($slot->end_time))
             ];
         }

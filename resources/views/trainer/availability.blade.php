@@ -39,13 +39,6 @@
                     </div>
                 </div>
                 
-                <div class="mb-4">
-                    <label class="flex items-center cursor-pointer">
-                        <input type="checkbox" name="is_recurring" value="1" checked class="mr-2">
-                        <span class="text-gray-700">🔄 Recurring weekly (same time every week)</span>
-                    </label>
-                </div>
-                
                 <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition">
                     + Add Slot
                 </button>
@@ -67,25 +60,15 @@
                                 <p class="text-sm text-gray-500">
                                     🕐 {{ date('h:i A', strtotime($slot->start_time)) }} - 
                                     {{ date('h:i A', strtotime($slot->end_time)) }}
-                                    @if($slot->is_recurring) 
-                                        <span class="text-green-600 text-xs ml-2">(Recurring)</span>
-                                    @endif
                                 </p>
-                                @if($slot->is_booked)
-                                    <p class="text-xs text-orange-500">📖 Booked</p>
-                                @endif
                             </div>
-                            @if(!$slot->is_booked)
-                                <form method="POST" action="{{ route('trainer.availability.destroy', $slot->id) }}">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-500 hover:text-red-700 transition">
-                                        🗑️ Remove
-                                    </button>
-                                </form>
-                            @else
-                                <span class="text-gray-400">🔒 Booked</span>
-                            @endif
+                            <form method="POST" action="{{ route('trainer.availability.destroy', $slot->id) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-500 hover:text-red-700 transition">
+                                    🗑️ Remove
+                                </button>
+                            </form>
                         </div>
                     @endforeach
                 </div>
@@ -105,7 +88,7 @@
             <span class="text-2xl">💡</span>
             <div>
                 <h3 class="font-semibold text-blue-800">Pro Tip</h3>
-                <p class="text-sm text-blue-700">Add your available time slots so trainees can book sessions with you. Slots are recurring weekly unless specified otherwise.</p>
+                <p class="text-sm text-blue-700">A trainee can book only one session for a specific date and time. The same weekday slot remains available on other dates.</p>
             </div>
         </div>
     </div>

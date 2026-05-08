@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Workout;
 use App\Models\ProgressMetric;
 use App\Models\ExerciseLog;
+use App\Support\ActivityStats;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -40,43 +41,16 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
         
-        // Calculate streak
-        $streak = $this->calculateStreak($user->id);
+        $activityStats = ActivityStats::forUser((string) $user->id);
+        $streak = $activityStats['streak'];
+        $activityCalendar = $activityStats['calendar'];
+        $activityTotal = $activityStats['total'];
         
         return view('dashboard', compact(
             'totalWorkouts', 'completedWorkouts', 
             'totalExercisesLogged', 'totalVolume',
             'recentWorkouts', 'latestProgress', 
-            'prs', 'streak'
+            'prs', 'streak', 'activityCalendar', 'activityTotal'
         ));
-    }
-    
-    private function calculateStreak($userId)
-    {
-        $workouts = Workout::where('user_id', $userId)
-            ->whereNotNull('completed_at')
-            ->orderBy('completed_at', 'desc')
-            ->get();
-        
-        if ($workouts->isEmpty()) {
-            return 0;
-        }
-        
-        $streak = 1;
-        $lastDate = $workouts->first()->completed_at->format('Y-m-d');
-        
-        foreach ($workouts->slice(1) as $workout) {
-            $currentDate = $workout->completed_at->format('Y-m-d');
-            $expectedDate = date('Y-m-d', strtotime($lastDate . ' -1 day'));
-            
-            if ($currentDate === $expectedDate) {
-                $streak++;
-                $lastDate = $currentDate;
-            } elseif ($currentDate !== $lastDate) {
-                break;
-            }
-        }
-        
-        return $streak;
     }
 }

@@ -86,7 +86,6 @@ class BookingController extends Controller
     // Check if trainer has availability for this time slot
     $availabilities = TrainerAvailability::where('trainer_id', $trainer_id)
         ->where('day_of_week', (int)$dayOfWeek)
-        ->where('is_booked', false)
         ->get();
     
     $isAvailable = false;
@@ -127,6 +126,7 @@ class BookingController extends Controller
     session([
         'pending_booking' => [
             'trainer_id' => $trainer_id,
+            'availability_id' => (string)$availabilitySlot->id,
             'session_date' => $request->session_date,
             'session_time' => $request->session_time,
             'duration' => $request->duration,
@@ -191,7 +191,6 @@ class BookingController extends Controller
             // Get availability slot
             $availabilities = TrainerAvailability::where('trainer_id', $pendingBooking['trainer_id'])
                 ->where('day_of_week', (int)$dayOfWeek)
-                ->where('is_booked', false)
                 ->get();
             
             $availability = null;
@@ -199,10 +198,33 @@ class BookingController extends Controller
                 $startTime = date('H:i', strtotime($slot->start_time));
                 $endTime = date('H:i', strtotime($slot->end_time));
                 
-                if ($sessionTime >= $startTime && $sessionTime <= $endTime) {
+                if ((string)$slot->id === ($pendingBooking['availability_id'] ?? '') && $sessionTime >= $startTime && $sessionTime <= $endTime) {
                     $availability = $slot;
                     break;
                 }
+            }
+
+            if (!$availability) {
+                session()->forget('pending_booking');
+
+                return redirect()->route('trainee.trainers')
+                    ->with('error', 'This time slot has already been booked. Please select another slot.');
+            }
+
+            $existingBooking = Booking::where('trainer_id', $pendingBooking['trainer_id'])
+                ->whereDate('session_date', $pendingBooking['session_date'])
+                ->where('status', 'confirmed')
+                ->get()
+                ->filter(function($booking) use ($sessionTime) {
+                    return date('H:i', strtotime($booking->session_date)) == $sessionTime;
+                })
+                ->count();
+
+            if ($existingBooking > 0) {
+                session()->forget('pending_booking');
+
+                return redirect()->route('trainee.trainers')
+                    ->with('error', 'This time slot has already been booked. Please select another slot.');
             }
             
             $booking = Booking::create([
@@ -214,14 +236,6 @@ class BookingController extends Controller
                 'status' => 'confirmed',
                 'payment_id' => $request->razorpay_payment_id
             ]);
-            
-            // Mark availability slot as booked
-            if ($availability) {
-                $availability->update([
-                    'is_booked' => true,
-                    'booking_id' => $booking->id
-                ]);
-            }
             
             Payment::create([
                 'user_id' => Auth::id(),
@@ -346,15 +360,6 @@ class BookingController extends Controller
             $booking->update(['completed_at' => now()]);
         } elseif ($request->status == 'cancelled') {
             $booking->update(['cancelled_at' => now()]);
-            
-            // Free up the availability slot if booking is cancelled
-            $availability = TrainerAvailability::where('booking_id', $booking->id)->first();
-            if ($availability) {
-                $availability->update([
-                    'is_booked' => false,
-                    'booking_id' => null
-                ]);
-            }
         }
         
         return redirect()->back()->with('success', 'Booking status updated!');

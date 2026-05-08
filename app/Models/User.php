@@ -21,7 +21,8 @@ class User extends Authenticatable
         'bio', 'experience_years', 'specialization', 'hourly_rate', 
         'certifications', 'is_verified', 'rating', 'total_clients',
         // Payment fields
-        'razorpay_id', 'stripe_id'
+        'razorpay_id', 'stripe_id',
+        'activity_visit_dates'
     ];
     
     protected $hidden = [
@@ -41,6 +42,7 @@ class User extends Authenticatable
         'is_verified' => 'boolean',
         'rating' => 'float',
         'total_clients' => 'integer',
+        'activity_visit_dates' => 'array',
     ];
     
     public function workouts()

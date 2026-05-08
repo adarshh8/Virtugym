@@ -65,6 +65,13 @@
                                         ⏰ Session time has passed
                                     </p>
                                 @endif
+
+                                @if(Auth::user()->role == 'trainee')
+                                    <a href="{{ route('music.index') }}"
+                                       class="mt-2 inline-block bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition">
+                                        🎵 Workout Music
+                                    </a>
+                                @endif
                                 
                                 <!-- Trainer Status Update -->
                                 @if(Auth::user()->role == 'trainer')
