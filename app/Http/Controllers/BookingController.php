@@ -22,11 +22,11 @@ class BookingController extends Controller
     public function __construct()
     {
         // Initialize Razorpay API
-        if (env('RAZORPAY_KEY') && env('RAZORPAY_SECRET')) {
+        if (config('services.razorpay.key') && config('services.razorpay.secret')) {
             try {
                 $this->razorpay = new Api(
-                    env('RAZORPAY_KEY'),
-                    env('RAZORPAY_SECRET')
+                    config('services.razorpay.key'),
+                    config('services.razorpay.secret')
                 );
             } catch (\Exception $e) {
                 \Log::error('Razorpay initialization failed: ' . $e->getMessage());
@@ -153,7 +153,7 @@ class BookingController extends Controller
             'order' => $razorpayOrder,
             'trainer' => $trainer,
             'amount' => $amount,
-            'razorpay_key' => env('RAZORPAY_KEY')
+            'razorpay_key' => config('services.razorpay.key')
         ]);
         
     } catch (\Exception $e) {

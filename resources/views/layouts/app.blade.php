@@ -727,17 +727,26 @@
         const c=document.getElementById('stars'),ctx=c.getContext('2d');let W,H,S=[];
         function resize(){W=c.width=innerWidth;H=c.height=innerHeight;}
         function init(){S=Array.from({length:160},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.2,a:Math.random(),da:(Math.random()-.5)*.005}));}
-        function starColor(alpha){
-            const accent = getComputedStyle(document.documentElement).getPropertyValue('--vg-accent').trim() || '#c4b5fd';
-            if (accent.startsWith('#')) {
-                const hex = accent.replace('#','');
-                const value = hex.length === 3 ? hex.split('').map(ch => ch + ch).join('') : hex;
-                const num = parseInt(value, 16);
-                return `rgba(${(num >> 16) & 255},${(num >> 8) & 255},${num & 255},${alpha})`;
+        let cachedAccent = null;
+        let lastTheme = null;
+
+        function getAccentColor(alpha) {
+            const currentTheme = document.documentElement.dataset.theme;
+            if (currentTheme !== lastTheme || !cachedAccent) {
+                lastTheme = currentTheme;
+                const accent = getComputedStyle(document.documentElement).getPropertyValue('--vg-accent').trim() || '#c4b5fd';
+                if (accent.startsWith('#')) {
+                    const hex = accent.replace('#','');
+                    const value = hex.length === 3 ? hex.split('').map(ch => ch + ch).join('') : hex;
+                    const num = parseInt(value, 16);
+                    cachedAccent = [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+                } else {
+                    cachedAccent = [196, 181, 253];
+                }
             }
-            return `rgba(196,181,253,${alpha})`;
+            return `rgba(${cachedAccent[0]},${cachedAccent[1]},${cachedAccent[2]},${alpha})`;
         }
-        function draw(){ctx.clearRect(0,0,W,H);S.forEach(s=>{s.a=Math.max(.05,Math.min(1,s.a+s.da));if(s.a<=.05||s.a>=1)s.da*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=starColor(s.a);ctx.fill();});requestAnimationFrame(draw);}
+        function draw(){ctx.clearRect(0,0,W,H);S.forEach(s=>{s.a=Math.max(.05,Math.min(1,s.a+s.da));if(s.a<=.05||s.a>=1)s.da*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=getAccentColor(s.a);ctx.fill();});requestAnimationFrame(draw);}
         window.addEventListener('resize',()=>{resize();init();});resize();init();draw();
     })();
 

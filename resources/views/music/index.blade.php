@@ -86,7 +86,7 @@
 
     function playSong(song) {
         const origin = encodeURIComponent(window.location.origin);
-        player.src = `https://www.youtube-nocookie.com/embed/${song.video_id}?autoplay=1&rel=0&enablejsapi=1&origin=${origin}`;
+        player.src = `https://www.youtube.com/embed/${song.video_id}?autoplay=1&rel=0&enablejsapi=1&origin=${origin}`;
         nowTitle.textContent = song.title;
         nowChannel.textContent = song.channel;
     }

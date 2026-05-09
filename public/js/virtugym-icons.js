@@ -102,7 +102,7 @@
 
     function replaceEmojiIcons(root) {
         const scope = root || document.body;
-        if (!scope || skippedTags.has(scope.tagName)) {
+        if (!scope || skippedTags.has(scope.tagName.toUpperCase())) {
             return;
         }
 
@@ -111,7 +111,7 @@
         const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
             acceptNode: function (node) {
                 const parent = node.parentElement;
-                if (!parent || skippedTags.has(parent.tagName) || parent.closest('[data-icons-processed="true"]')) {
+                if (!parent || skippedTags.has(parent.tagName.toUpperCase()) || parent.closest('[data-icons-processed="true"]')) {
                     return NodeFilter.FILTER_REJECT;
                 }
                 emojiPattern.lastIndex = 0;
@@ -133,6 +133,9 @@
 
     function observeDynamicContent() {
         const observer = new MutationObserver(function (mutations) {
+            // Disconnect to prevent infinite loops from our own DOM modifications
+            observer.disconnect();
+
             mutations.forEach(function (mutation) {
                 mutation.addedNodes.forEach(function (node) {
                     if (node.nodeType === Node.ELEMENT_NODE) {
@@ -145,6 +148,9 @@
                     }
                 });
             });
+
+            // Reconnect after processing
+            observer.observe(document.body, { childList: true, subtree: true });
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
