@@ -318,19 +318,59 @@ class BookingController extends Controller
             return redirect()->route('login');
         }
         
-        if (Auth::user()->role === 'trainer') {
-            $bookings = Booking::where('trainer_id', Auth::id())
-                ->with('trainee')
-                ->orderBy('session_date', 'asc')
-                ->paginate(20);
-        } else {
-            $bookings = Booking::where('trainee_id', Auth::id())
-                ->with('trainer')
-                ->orderBy('created_at', 'desc')
-                ->paginate(20);
+        $userId = Auth::id();
+        $isTrainer = Auth::user()->role === 'trainer';
+        $roleField = $isTrainer ? 'trainer_id' : 'trainee_id';
+        $withRelation = $isTrainer ? 'trainee' : 'trainer';
+
+        // 1. Upcoming Bookings (Confirmed status, date in the future)
+        $upcomingBookings = Booking::where($roleField, $userId)
+            ->where('status', 'confirmed')
+            ->where('session_date', '>=', now())
+            ->with($withRelation)
+            ->orderBy('session_date', 'asc')
+            ->get();
+
+        // 2. Past Bookings (Completed status OR confirmed but date has passed)
+        $pastBookings = Booking::where($roleField, $userId)
+            ->where(function($query) {
+                $query->where('status', 'completed')
+                      ->orWhere(function($q) {
+                          $q->where('status', 'confirmed')
+                            ->where('session_date', '<', now());
+                      });
+            })
+            ->with($withRelation)
+            ->orderBy('session_date', 'desc')
+            ->get();
+
+        // 3. Cancelled Bookings
+        $cancelledBookings = Booking::where($roleField, $userId)
+            ->where('status', 'cancelled')
+            ->with($withRelation)
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        // 4. Summary Metrics (For Trainees)
+        $totalSpentThisMonth = 0;
+        $totalSessionsCompleted = 0;
+
+        if (!$isTrainer) {
+            $totalSpentThisMonth = Booking::where('trainee_id', $userId)
+                ->whereIn('status', ['confirmed', 'completed'])
+                ->where('session_date', '>=', now()->startOfMonth())
+                ->where('session_date', '<=', now()->endOfMonth())
+                ->sum('amount');
+                
+            $totalSessionsCompleted = Booking::where('trainee_id', $userId)
+                ->where('status', 'completed')
+                ->count();
         }
-        
-        return view('bookings.index', compact('bookings'));
+
+        return view('bookings.index', compact(
+            'upcomingBookings', 'pastBookings', 'cancelledBookings',
+            'totalSpentThisMonth', 'totalSessionsCompleted', 'isTrainer'
+        ));
     }
     
     /**

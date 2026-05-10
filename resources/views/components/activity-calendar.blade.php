@@ -23,7 +23,9 @@
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
         <div>
             <h2 style="font-size:1rem;font-weight:700;color:#e2d9f3;margin-bottom:.25rem;">Monthly Activity Calendar</h2>
-            <p style="font-size:.78rem;color:rgba(255,255,255,.35);">{{ $total }} activity points in the last {{ $calendar->count() }} days</p>
+            @if($total > 0)
+                <p style="font-size:.78rem;color:rgba(255,255,255,.35);">{{ $total }} activity {{ $total === 1 ? 'point' : 'points' }} in the last {{ $calendar->count() }} days</p>
+            @endif
         </div>
         <div style="text-align:right;">
             <div style="font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,#6ee7b7,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;">{{ $streak }}</div>
