@@ -135,10 +135,37 @@
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
 
+    let lastMessageId = null;
+    let firstLoad = true;
+
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function buildMessageEl(msg) {
+        const isOwn = msg.sender_id == currentUserId;
+        const date = new Date(msg.created_at);
+        const timeStr = date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        const wrapper = document.createElement('div');
+        wrapper.dataset.msgId = msg.id;
+        wrapper.style.cssText = 'display:flex;' + (isOwn ? 'justify-content:flex-end;' : 'justify-content:flex-start;');
+
+        if (isOwn) {
+            wrapper.innerHTML = `
+                <div style="max-width:65%;background:linear-gradient(135deg,#8b5cf6,#7c3aed);border-radius:18px 18px 4px 18px;padding:10px 14px;box-shadow:0 4px 12px rgba(139,92,246,.3);">
+                    <p style="font-size:.85rem;color:#fff;word-break:break-word;">${escapeHtml(msg.message)}</p>
+                    <p style="font-size:.65rem;color:rgba(255,255,255,.5);margin-top:4px;text-align:right;">${timeStr}</p>
+                </div>`;
+        } else {
+            wrapper.innerHTML = `
+                <div style="max-width:65%;background:rgba(255,255,255,.07);border:1px solid rgba(139,92,246,.2);border-radius:18px 18px 18px 4px;padding:10px 14px;">
+                    <p style="font-size:.85rem;color:#e2d9f3;word-break:break-word;">${escapeHtml(msg.message)}</p>
+                    <p style="font-size:.65rem;color:rgba(255,255,255,.3);margin-top:4px;">${timeStr}</p>
+                </div>`;
+        }
+        return wrapper;
     }
 
     function loadMessages() {
@@ -146,36 +173,36 @@
             .then(r => r.json())
             .then(messages => {
                 if (!chatMessagesDiv) return;
-                chatMessagesDiv.innerHTML = '';
 
                 if (messages.length === 0) {
-                    chatMessagesDiv.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,.2);font-size:.82rem;padding:2rem;">No messages yet. Start the conversation! 👋</div>';
+                    if (firstLoad) {
+                        chatMessagesDiv.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,.2);font-size:.82rem;padding:2rem;">No messages yet. Start the conversation! 👋</div>';
+                        firstLoad = false;
+                    }
                     return;
                 }
 
-                messages.forEach(msg => {
-                    const isOwn = msg.sender_id == currentUserId;
-                    const date = new Date(msg.created_at);
-                    const timeStr = date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                    const wrapper = document.createElement('div');
-                    wrapper.style.cssText = 'display:flex;' + (isOwn ? 'justify-content:flex-end;' : 'justify-content:flex-start;');
+                // On first load, render all messages
+                if (firstLoad) {
+                    chatMessagesDiv.innerHTML = '';
+                    messages.forEach(msg => chatMessagesDiv.appendChild(buildMessageEl(msg)));
+                    lastMessageId = messages[messages.length - 1].id;
+                    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+                    firstLoad = false;
+                    return;
+                }
 
-                    if (isOwn) {
-                        wrapper.innerHTML = `
-                            <div style="max-width:65%;background:linear-gradient(135deg,#8b5cf6,#7c3aed);border-radius:18px 18px 4px 18px;padding:10px 14px;box-shadow:0 4px 12px rgba(139,92,246,.3);">
-                                <p style="font-size:.85rem;color:#fff;word-break:break-word;">${escapeHtml(msg.message)}</p>
-                                <p style="font-size:.65rem;color:rgba(255,255,255,.5);margin-top:4px;text-align:right;">${timeStr}</p>
-                            </div>`;
-                    } else {
-                        wrapper.innerHTML = `
-                            <div style="max-width:65%;background:rgba(255,255,255,.07);border:1px solid rgba(139,92,246,.2);border-radius:18px 18px 18px 4px;padding:10px 14px;">
-                                <p style="font-size:.85rem;color:#e2d9f3;word-break:break-word;">${escapeHtml(msg.message)}</p>
-                                <p style="font-size:.65rem;color:rgba(255,255,255,.3);margin-top:4px;">${timeStr}</p>
-                            </div>`;
-                    }
-                    chatMessagesDiv.appendChild(wrapper);
-                });
-                chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+                // On subsequent polls, only append messages newer than lastMessageId
+                const newMessages = messages.filter(msg => msg.id > lastMessageId);
+                if (newMessages.length > 0) {
+                    // Remove "no messages" placeholder if present
+                    const placeholder = chatMessagesDiv.querySelector('[data-placeholder]');
+                    if (placeholder) placeholder.remove();
+
+                    newMessages.forEach(msg => chatMessagesDiv.appendChild(buildMessageEl(msg)));
+                    lastMessageId = newMessages[newMessages.length - 1].id;
+                    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+                }
             })
             .catch(e => console.error('Error loading messages:', e));
     }

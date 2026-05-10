@@ -317,9 +317,10 @@ document.querySelectorAll('a[href^="#"]').forEach(a=>{
 });
 
 // Parallax orbs on mouse move
+const orbs = document.querySelectorAll('.orb');
 document.addEventListener('mousemove',e=>{
   const x=(e.clientX/innerWidth-.5)*18,y=(e.clientY/innerHeight-.5)*18;
-  document.querySelectorAll('.orb').forEach((o,i)=>{
+  orbs.forEach((o,i)=>{
     const f=(i+1)*0.4;
     o.style.transform=`translate(${x*f}px,${y*f}px)`;
   });

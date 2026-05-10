@@ -44,6 +44,7 @@ class MusicController extends Controller
                     'part' => 'snippet',
                     'type' => 'video',
                     'videoEmbeddable' => 'true',
+                    'videoSyndicated' => 'true',
                     'order' => 'relevance',
                     'safeSearch' => 'none',
                     'maxResults' => 8,
