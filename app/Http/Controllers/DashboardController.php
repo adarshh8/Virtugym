@@ -45,12 +45,33 @@ class DashboardController extends Controller
         $streak = $activityStats['streak'];
         $activityCalendar = $activityStats['calendar'];
         $activityTotal = $activityStats['total'];
+
+        // Booking stats
+        $totalBookings = \App\Models\Booking::where('trainee_id', $user->id)
+            ->orWhere('trainer_id', $user->id)
+            ->count();
+        $upcomingSessions = \App\Models\Booking::where(function($q) use ($user) {
+                $q->where('trainee_id', $user->id)->orWhere('trainer_id', $user->id);
+            })
+            ->where('status', 'confirmed')
+            ->where('start_time', '>', now())
+            ->count();
+        
+        // Dummy data for charts (to be implemented with real logic later if needed)
+        $weeklyWorkouts = [2, 4, 3, 5, 3, 4, 6, 4]; // Past 8 weeks
+        $workoutTypes = [
+            'Strength' => 45,
+            'Cardio' => 30,
+            'Flexibility' => 15,
+            'HIIT' => 10
+        ];
         
         return view('dashboard', compact(
             'totalWorkouts', 'completedWorkouts', 
             'totalExercisesLogged', 'totalVolume',
             'recentWorkouts', 'latestProgress', 
-            'prs', 'streak', 'activityCalendar', 'activityTotal'
+            'prs', 'streak', 'activityCalendar', 'activityTotal',
+            'totalBookings', 'upcomingSessions', 'weeklyWorkouts', 'workoutTypes'
         ));
     }
 }

@@ -15,6 +15,7 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard-v2.css">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
     <script src="/js/virtugym-icons.js" defer></script>
 
@@ -331,13 +332,14 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px 16px;
-            border-radius: 12px;
+            padding: 8px 12px;
+            margin: 1px 8px;
+            border-radius: 8px;
             color: var(--vg-text-muted);
-            font-size: .88rem;
+            font-size: 12px;
             font-weight: 500;
             text-decoration: none;
-            transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+            transition: all 0.2s ease;
             position: relative;
             margin-bottom: 2px;
         }
@@ -594,6 +596,13 @@
 
     <!-- SIDEBAR -->
     <aside id="sidebar" class="sidebar">
+        <div class="logo-v2">
+            <div class="logo-icon-v2">💪</div>
+            <div>
+                <div class="logo-text-v2">VIRTU GYM</div>
+                <div class="logo-sub-v2">Virtual Trainer</div>
+            </div>
+        </div>
         <div style="padding:1.2rem 1rem;">
             <p style="font-size:.65rem;color:rgba(255,255,255,.2);font-weight:700;letter-spacing:.12em;padding:0 8px;margin-bottom:.6rem;">MAIN</p>
             <nav style="display:flex;flex-direction:column;">
@@ -656,9 +665,7 @@
                 <a href="{{ route('bookings.index') }}" class="sidebar-item {{ request()->routeIs('bookings.*') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="calendar-days"></i></span><span>My Sessions</span>
                 </a>
-                <a href="{{ route('music.index') }}" class="sidebar-item {{ request()->routeIs('music.*') ? 'active' : '' }}">
-                    <span class="s-icon"><i data-lucide="music"></i></span><span>Workout Music</span>
-                </a>
+
                 @endif
                 @endif
             </nav>
@@ -691,12 +698,7 @@
                 </div>
             </div>
 
-            <!-- Streak Widget -->
-            <div class="streak-widget">
-                <div style="font-size:1.5rem;margin-bottom:4px;"><i data-lucide="flame" style="width:1.1em;height:1.1em;margin:0 auto;"></i></div>
-                <div class="s-num" id="streakCount">{{ $layoutStreak ?? 0 }}</div>
-                <div class="s-lbl">24h Streak</div>
-            </div>
+
         </div>
     </aside>
 
