@@ -211,7 +211,7 @@
                                     <p style="font-size:.7rem;color:#10b981;">{{ ucfirst($booking->status) }}</p>
                                 </div>
                                 @if(!$isTrainer && $partner)
-                                    <a href="{{ route('bookings.create', $partner->id) }}" class="past-action-btn" style="background:var(--vg-sidebar);border:1px solid var(--vg-border-strong);color:var(--vg-text-strong);padding:6px 12px;border-radius:6px;font-size:.75rem;font-weight:600;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='var(--vg-panel-strong)'" onmouseout="this.style.background='var(--vg-sidebar)'">Book Again</a>
+                                    <a href="{{ route('book.trainer.create', $partner->id) }}" class="past-action-btn" style="background:var(--vg-sidebar);border:1px solid var(--vg-border-strong);color:var(--vg-text-strong);padding:6px 12px;border-radius:6px;font-size:.75rem;font-weight:600;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='var(--vg-panel-strong)'" onmouseout="this.style.background='var(--vg-sidebar)'">Book Again</a>
                                 @endif
                             </div>
                         </div>
@@ -239,7 +239,7 @@
                             <h3 style="font-size:1rem;font-weight:700;color:var(--vg-text-strong);margin-bottom:4px;">{{ $partnerName }}</h3>
                             <p style="font-size:.8rem;color:var(--vg-text-muted);margin-bottom:12px;">{{ \Carbon\Carbon::parse($booking->session_date)->format('M d, Y • h:i A') }}</p>
                             @if(!$isTrainer && $partner)
-                                <a href="{{ route('bookings.create', $partner->id) }}" style="display:inline-block;font-size:.75rem;color:var(--vg-accent);font-weight:600;text-decoration:none;">Rebook Session →</a>
+                                <a href="{{ route('book.trainer.create', $partner->id) }}" style="display:inline-block;font-size:.75rem;color:var(--vg-accent);font-weight:600;text-decoration:none;">Rebook Session →</a>
                             @endif
                         </div>
                     @endforeach
@@ -271,10 +271,14 @@
                     <p style="font-size:.7rem;color:var(--vg-text-faint);margin-top:4px;">Current month ({{ now()->format('F') }})</p>
                 </div>
 
-                <div style="background:var(--vg-sidebar);border:1px solid var(--vg-border-strong);border-radius:12px;padding:1rem;text-align:center;">
+                <div style="background:var(--vg-sidebar);border:1px solid var(--vg-border-strong);border-radius:12px;padding:1rem;text-align:center;margin-bottom:1rem;">
                     <div style="font-size:1.5rem;margin-bottom:.5rem;">💡</div>
                     <p style="font-size:.75rem;color:var(--vg-text-muted);line-height:1.4;">Booking sessions regularly helps maintain consistency and achieve your goals faster!</p>
                 </div>
+
+                <a href="{{ route('music.index') }}" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--vg-gradient);color:#fff;padding:12px;border-radius:12px;font-size:.85rem;font-weight:700;text-decoration:none;box-shadow:0 8px 20px var(--vg-accent-glow);transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                    <i data-lucide="music" style="width:16px;height:16px;"></i> Workout Music
+                </a>
             </div>
         @else
             <div style="background:var(--vg-panel);border:1px solid var(--vg-border);border-radius:20px;padding:1.6rem;position:sticky;top:2rem;">

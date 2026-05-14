@@ -649,6 +649,10 @@
                     <span>AI Coach</span>
                 </a>
 
+                <a href="{{ route('music.index') }}" class="sidebar-item {{ request()->routeIs('music.*') ? 'active' : '' }}">
+                    <span class="s-icon"><i data-lucide="music"></i></span><span>Workout Music</span>
+                </a>
+
                 @if(Auth::user()->role == 'trainer')
                 <a href="{{ route('trainer.availability.index') }}" class="sidebar-item {{ request()->routeIs('trainer.availability.*') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="clock"></i></span><span>Availability</span>
