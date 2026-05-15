@@ -13,6 +13,7 @@ class Booking extends Model
         'trainee_id', 'trainer_id', 'session_date', 'session_time',
         'duration_minutes', 'status', 'amount', 'payment_id',
         'special_requests', 'cancelled_at', 'completed_at',
+        'cancelled_by', 'cancellation_reason',
         'meeting_id', 'meeting_link', 'meeting_started', 'meeting_ended'
     ];
     

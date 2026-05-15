@@ -146,9 +146,14 @@ public function index()
             'type' => 'required|string',
             'difficulty' => 'required|string',
             'duration_minutes' => 'nullable|integer',
+            'exercises' => 'required|array',
+            'exercises.*.exercise_id' => 'required|exists:exercises,_id',
+            'exercises.*.sets' => 'required|integer|min:1',
+            'exercises.*.reps' => 'required|integer|min:1',
+            'exercises.*.target_weight' => 'nullable|numeric',
         ]);
         
-        $workout->update($request->only(['title', 'type', 'difficulty', 'duration_minutes']));
+        $workout->update($request->only(['title', 'type', 'difficulty', 'duration_minutes', 'exercises']));
         
         return redirect()->route('workouts.show', $workout->id)
             ->with('success', 'Workout updated successfully!');

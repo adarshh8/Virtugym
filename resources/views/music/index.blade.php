@@ -18,7 +18,7 @@
         <div class="bg-white rounded-xl shadow-lg p-10 text-center">
             <div class="text-5xl mb-4">🎵</div>
             <h2 class="text-xl font-bold text-gray-800">Book a session to unlock workout music</h2>
-            <p class="text-gray-600 mt-2">Music search is available for users with a confirmed trainer session.</p>
+            <p class="text-gray-600 mt-2">Music search is available for trainees with a confirmed trainer session.</p>
             @if(Auth::user()->role === 'trainee')
                 <a href="{{ route('trainee.trainers') }}" class="inline-block mt-5 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
                     Browse Trainers

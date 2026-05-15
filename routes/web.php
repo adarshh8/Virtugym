@@ -61,10 +61,12 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
 
     // Progress
     Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
+    Route::post('/progress', [ProgressController::class, 'store'])->name('progress.store');
 
     // Music
     Route::get('/music', [MusicController::class, 'index'])->name('music.index');
     Route::get('/music/search', [MusicController::class, 'search'])->name('music.search');
+    Route::get('/music/default-track', [MusicController::class, 'defaultTrack'])->name('music.default');
     
     // Profile
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');

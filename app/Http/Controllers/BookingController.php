@@ -318,6 +318,7 @@ class BookingController extends Controller
             return redirect()->route('login');
         }
         
+<<<<<<< Updated upstream
         if (Auth::user()->role === 'trainer') {
             $bookings = Booking::where('trainer_id', Auth::id())
                 ->with('trainee')
@@ -328,6 +329,56 @@ class BookingController extends Controller
                 ->with('trainer')
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);
+=======
+        $userId = Auth::id();
+        $isTrainer = Auth::user()->role === 'trainer';
+        $roleField = $isTrainer ? 'trainer_id' : 'trainee_id';
+        $withRelation = $isTrainer ? 'trainee' : 'trainer';
+
+        // 1. Upcoming/active bookings. Keep started sessions visible so the join
+        // button does not disappear while the session is in progress.
+        $upcomingBookings = Booking::where($roleField, $userId)
+            ->where('status', 'confirmed')
+            ->where('session_date', '>=', now()->subHours(3))
+            ->with($withRelation)
+            ->orderBy('session_date', 'asc')
+            ->get();
+
+        // 2. Past Bookings (Completed status OR confirmed but date has passed)
+        $pastBookings = Booking::where($roleField, $userId)
+            ->where(function($query) {
+                $query->where('status', 'completed')
+                      ->orWhere(function($q) {
+                          $q->where('status', 'confirmed')
+                            ->where('session_date', '<', now()->subHours(3));
+                      });
+            })
+            ->with($withRelation)
+            ->orderBy('session_date', 'desc')
+            ->get();
+
+        // 3. Cancelled Bookings
+        $cancelledBookings = Booking::where($roleField, $userId)
+            ->where('status', 'cancelled')
+            ->with($withRelation)
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        // 4. Summary Metrics (For Trainees)
+        $totalSpentThisMonth = 0;
+        $totalSessionsCompleted = 0;
+
+        if (!$isTrainer) {
+            $totalSpentThisMonth = Booking::where('trainee_id', $userId)
+                ->whereIn('status', ['confirmed', 'completed'])
+                ->where('session_date', '>=', now()->startOfMonth())
+                ->where('session_date', '<=', now()->endOfMonth())
+                ->sum('amount');
+                
+            $totalSessionsCompleted = Booking::where('trainee_id', $userId)
+                ->where('status', 'completed')
+                ->count();
+>>>>>>> Stashed changes
         }
         
         return view('bookings.index', compact('bookings'));
@@ -346,21 +397,25 @@ class BookingController extends Controller
         $booking = Booking::where('trainer_id', Auth::id())->findOrFail($id);
         
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:confirmed,completed,cancelled'
+            'status' => 'required|in:confirmed,completed,cancelled',
+            'cancellation_reason' => 'required_if:status,cancelled|nullable|string|min:5|max:500',
         ]);
         
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator);
         }
         
-        $oldStatus = $booking->status;
-        $booking->update(['status' => $request->status]);
+        $updateData = ['status' => $request->status];
         
         if ($request->status == 'completed') {
-            $booking->update(['completed_at' => now()]);
+            $updateData['completed_at'] = now();
         } elseif ($request->status == 'cancelled') {
-            $booking->update(['cancelled_at' => now()]);
+            $updateData['cancelled_at'] = now();
+            $updateData['cancelled_by'] = Auth::id();
+            $updateData['cancellation_reason'] = $request->cancellation_reason;
         }
+
+        $booking->update($updateData);
         
         return redirect()->back()->with('success', 'Booking status updated!');
     }

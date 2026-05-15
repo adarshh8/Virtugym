@@ -13,7 +13,7 @@ class MusicController extends Controller
 {
     public function index()
     {
-        $hasBookedSession = $this->hasConfirmedBooking();
+        $hasBookedSession = $this->hasConfirmedTraineeBooking();
         $youtubeConfigured = (bool) config('services.youtube.key');
 
         return view('music.index', compact('hasBookedSession', 'youtubeConfigured'));
@@ -21,7 +21,7 @@ class MusicController extends Controller
 
     public function search(Request $request)
     {
-        if (!$this->hasConfirmedBooking()) {
+        if (!$this->hasConfirmedTraineeBooking()) {
             abort(403, 'Workout music is available after booking a confirmed session.');
         }
 
@@ -38,19 +38,7 @@ class MusicController extends Controller
         }
 
         try {
-            $response = Http::connectTimeout(3)
-                ->timeout(5)
-                ->get('https://www.googleapis.com/youtube/v3/search', [
-                    'part' => 'snippet',
-                    'type' => 'video',
-                    'videoEmbeddable' => 'true',
-                    'videoSyndicated' => 'true',
-                    'order' => 'relevance',
-                    'safeSearch' => 'none',
-                    'maxResults' => 8,
-                    'q' => $validated['q'],
-                    'key' => $apiKey,
-                ]);
+            $response = $this->youtubeSearch($validated['q'], 8, $apiKey);
         } catch (ConnectionException|RequestException $exception) {
             return response()->json([
                 'message' => 'YouTube search timed out. Please try again.',
@@ -80,15 +68,78 @@ class MusicController extends Controller
         return response()->json(['songs' => $songs]);
     }
 
-    private function hasConfirmedBooking(): bool
+    public function defaultTrack()
+    {
+        if (!$this->hasConfirmedTraineeBooking()) {
+            abort(403, 'Workout music is available after booking a confirmed session.');
+        }
+
+        $apiKey = config('services.youtube.key');
+
+        if (!$apiKey) {
+            return response()->json([
+                'message' => 'YouTube API key is not configured.',
+            ], 422);
+        }
+
+        try {
+            $response = $this->youtubeSearch('gym workout music motivation clean', 1, $apiKey);
+        } catch (ConnectionException|RequestException $exception) {
+            return response()->json([
+                'message' => 'Could not load background music.',
+            ], 504);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'message' => 'Could not load background music.',
+            ], 502);
+        }
+
+        $item = collect($response->json('items', []))->firstWhere('id.videoId');
+
+        if (!$item) {
+            return response()->json([
+                'message' => 'No background music track found.',
+            ], 404);
+        }
+
+        return response()->json([
+            'song' => [
+                'video_id' => $item['id']['videoId'],
+                'title' => $item['snippet']['title'] ?? 'Workout music',
+                'channel' => $item['snippet']['channelTitle'] ?? 'YouTube',
+            ],
+        ]);
+    }
+
+    private function youtubeSearch(string $query, int $maxResults, string $apiKey)
+    {
+        return Http::connectTimeout(3)
+            ->timeout(5)
+            ->get('https://www.googleapis.com/youtube/v3/search', [
+                'part' => 'snippet',
+                'type' => 'video',
+                'videoEmbeddable' => 'true',
+                'videoSyndicated' => 'true',
+                'order' => 'relevance',
+                'safeSearch' => 'none',
+                'maxResults' => $maxResults,
+                'q' => $query,
+                'key' => $apiKey,
+            ]);
+    }
+
+    private function hasConfirmedTraineeBooking(): bool
     {
         $userId = Auth::id();
 
+        if (Auth::user()->role !== 'trainee') {
+            return false;
+        }
+
         return Booking::where('status', 'confirmed')
             ->where('trainee_id', $userId)
-            ->exists()
-            || Booking::where('status', 'confirmed')
-                ->where('trainer_id', $userId)
-                ->exists();
+            ->exists();
     }
 }

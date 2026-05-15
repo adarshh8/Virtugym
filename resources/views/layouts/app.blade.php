@@ -657,8 +657,14 @@
                     <span class="s-icon"><i data-lucide="calendar-days"></i></span><span>My Sessions</span>
                 </a>
                 <a href="{{ route('music.index') }}" class="sidebar-item {{ request()->routeIs('music.*') ? 'active' : '' }}">
+<<<<<<< Updated upstream
                     <span class="s-icon"><i data-lucide="music"></i></span><span>Workout Music</span>
                 </a>
+=======
+                    <span class="s-icon"><i data-lucide="music"></i></span><span>My Music</span>
+                </a>
+
+>>>>>>> Stashed changes
                 @endif
                 @endif
             </nav>
@@ -720,6 +726,19 @@
             @yield('content')
         </div>
     </main>
+
+    @if(Auth::user()->role == 'trainee')
+        <div id="globalMusicDock" style="position:fixed;right:18px;bottom:18px;z-index:60;display:none;align-items:center;gap:10px;background:rgba(8,8,26,.92);border:1px solid var(--vg-border);box-shadow:0 18px 40px rgba(0,0,0,.35);backdrop-filter:blur(14px);border-radius:14px;padding:10px 12px;max-width:min(330px,calc(100vw - 36px));">
+            <button type="button" id="globalMusicToggle" title="Play gym music" aria-label="Play gym music" style="width:34px;height:34px;border-radius:10px;border:1px solid var(--vg-border-strong);background:var(--vg-accent-soft);color:var(--vg-text-strong);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+                <i data-lucide="music"></i>
+            </button>
+            <div style="min-width:0;">
+                <p id="globalMusicTitle" style="font-size:.75rem;color:var(--vg-text-strong);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px;">Gym Music</p>
+                <p style="font-size:.65rem;color:var(--vg-text-muted);">YouTube</p>
+            </div>
+            <iframe id="globalMusicFrame" title="Background gym music" allow="autoplay; encrypted-media" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0;"></iframe>
+        </div>
+    @endif
 
     <script>
     // Starfield
@@ -796,6 +815,46 @@
             setTimeout(()=>el.remove(), 400);
         });
     }, 5000);
+
+    @if(Auth::user()->role == 'trainee')
+    // Background gym music for trainees with confirmed sessions.
+    (function(){
+        const dock = document.getElementById('globalMusicDock');
+        const toggle = document.getElementById('globalMusicToggle');
+        const frame = document.getElementById('globalMusicFrame');
+        const title = document.getElementById('globalMusicTitle');
+        let song = null;
+        let playing = false;
+
+        function srcFor(videoId, shouldPlay) {
+            const origin = encodeURIComponent(window.location.origin);
+            return `https://www.youtube.com/embed/${videoId}?autoplay=${shouldPlay ? 1 : 0}&rel=0&controls=0&loop=1&playlist=${videoId}&enablejsapi=1&origin=${origin}`;
+        }
+
+        function setPlaying(next) {
+            if (!song) return;
+            playing = next;
+            frame.src = srcFor(song.video_id, playing);
+            toggle.innerHTML = playing ? '<i data-lucide="pause"></i>' : '<i data-lucide="music"></i>';
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        fetch('{{ route('music.default') }}', { headers: { 'Accept': 'application/json' } })
+            .then(response => response.ok ? response.json() : null)
+            .then(data => {
+                if (!data || !data.song) return;
+                song = data.song;
+                title.textContent = song.title || 'Gym Music';
+                dock.style.display = 'flex';
+                setPlaying(true);
+            })
+            .catch(() => {});
+
+        toggle.addEventListener('click', function(){
+            setPlaying(!playing);
+        });
+    })();
+    @endif
     </script>
 </body>
 </html>
