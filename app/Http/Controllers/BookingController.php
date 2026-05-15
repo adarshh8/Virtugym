@@ -318,18 +318,6 @@ class BookingController extends Controller
             return redirect()->route('login');
         }
         
-<<<<<<< Updated upstream
-        if (Auth::user()->role === 'trainer') {
-            $bookings = Booking::where('trainer_id', Auth::id())
-                ->with('trainee')
-                ->orderBy('session_date', 'asc')
-                ->paginate(20);
-        } else {
-            $bookings = Booking::where('trainee_id', Auth::id())
-                ->with('trainer')
-                ->orderBy('created_at', 'desc')
-                ->paginate(20);
-=======
         $userId = Auth::id();
         $isTrainer = Auth::user()->role === 'trainer';
         $roleField = $isTrainer ? 'trainer_id' : 'trainee_id';
@@ -348,9 +336,9 @@ class BookingController extends Controller
         $pastBookings = Booking::where($roleField, $userId)
             ->where(function($query) {
                 $query->where('status', 'completed')
-                      ->orWhere(function($q) {
-                          $q->where('status', 'confirmed')
-                            ->where('session_date', '<', now()->subHours(3));
+                          ->orWhere(function($q) {
+                              $q->where('status', 'confirmed')
+                                ->where('session_date', '<', now()->subHours(3));
                       });
             })
             ->with($withRelation)
@@ -378,10 +366,12 @@ class BookingController extends Controller
             $totalSessionsCompleted = Booking::where('trainee_id', $userId)
                 ->where('status', 'completed')
                 ->count();
->>>>>>> Stashed changes
         }
-        
-        return view('bookings.index', compact('bookings'));
+
+        return view('bookings.index', compact(
+            'upcomingBookings', 'pastBookings', 'cancelledBookings',
+            'totalSpentThisMonth', 'totalSessionsCompleted', 'isTrainer'
+        ));
     }
     
     /**

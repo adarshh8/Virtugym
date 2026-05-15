@@ -57,40 +57,11 @@ class AnalyticsController extends Controller
             $totalReps += $logTotals['reps'];
         }
         
-<<<<<<< Updated upstream
-        // Volume stats
-        $totalVolume = (float) ExerciseLog::where('user_id', $user->id)->sum('weight');
-        $totalReps = (int) ExerciseLog::where('user_id', $user->id)->sum('reps');
-        
-        // Weekly progress (simplified for MongoDB)
-        $thirtyDaysAgo = now()->subDays(30);
-        $weeklyWorkouts = Workout::where('user_id', $user->id)
-            ->where('completed_at', '>=', $thirtyDaysAgo)
-            ->whereNotNull('completed_at')
-            ->orderBy('completed_at', 'asc')
-            ->get();
-        
-        // Group by week manually
-        $weeklyProgress = [];
-        foreach ($weeklyWorkouts as $workout) {
-            $weekKey = $workout->completed_at->format('Y-m');
-            if (!isset($weeklyProgress[$weekKey])) {
-                $weeklyProgress[$weekKey] = 0;
-            }
-            $weeklyProgress[$weekKey]++;
-        }
-        
-        // Personal Records
-=======
->>>>>>> Stashed changes
         $prs = ExerciseLog::where('user_id', $user->id)
             ->where('is_pr', true)
             ->orderBy('created_at', 'desc')
-            ->limit(10)
+            ->limit(4)
             ->get();
-<<<<<<< Updated upstream
-        
-=======
 
         $weekStarts = collect(range(7, 0))->map(fn ($weeksAgo) => now()->startOfWeek()->subWeeks($weeksAgo));
         $workoutFrequency = $weekStarts->map(function ($weekStart) use ($completedWorkoutItems) {
@@ -193,11 +164,11 @@ class AnalyticsController extends Controller
                 'updated_at' => now()->toIso8601String(),
             ]);
         }
-
->>>>>>> Stashed changes
         return view('analytics.trainee', compact(
             'totalWorkouts', 'completedWorkouts', 'completionRate',
-            'totalVolume', 'totalReps', 'weeklyProgress', 'prs'
+            'totalVolume', 'totalReps', 'prs',
+            'workoutFrequency', 'volumeOverTime', 'durationTrend',
+            'muscleBreakdown', 'bestDays', 'comparison', 'consistencyScore'
         ));
     }
 

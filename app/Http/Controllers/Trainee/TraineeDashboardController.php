@@ -43,7 +43,27 @@ class TraineeDashboardController extends Controller
         $streak = $activityStats['streak'];
         $activityCalendar = $activityStats['calendar'];
         $activityTotal = $activityStats['total'];
-        
+
+        // Latest progress for BMI card
+        $latestProgress = \App\Models\ProgressMetric::where('user_id', $trainee->id)
+            ->orderBy('date', 'desc')
+            ->first();
+
+        // Dummy data for weekly calorie chart
+        $weeklyCalories = [2100, 2400, 1900, 2800, 2200, 2600, 3100, 2500];
+
+        // Motivational quote
+        $quotes = [
+            "The only bad workout is the one that didn't happen.",
+            "It never gets easier, you just get stronger.",
+            "Don't stop when you're tired. Stop when you're done.",
+            "Push harder than yesterday if you want a different tomorrow."
+        ];
+        $motivationalQuote = $quotes[array_rand($quotes)];
+
+        // Dummy AI tip
+        $aiTip = "Based on your recent sessions, adding 15 minutes of cardio after your strength training could boost your fat burn by 20%.";
+
         return view('trainee.dashboard', compact(
             'stats',
             'recentWorkouts',
@@ -51,7 +71,11 @@ class TraineeDashboardController extends Controller
             'availableTrainers',
             'streak',
             'activityCalendar',
-            'activityTotal'
+            'activityTotal',
+            'latestProgress',
+            'weeklyCalories',
+            'motivationalQuote',
+            'aiTip'
         ));
     }
     

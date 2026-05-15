@@ -16,12 +16,15 @@
             <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                 <div>
                     <h1 style="font-size:2rem;font-weight:900;color:#fff;margin-bottom:.5rem;">{{ $workout->title }}</h1>
-                    <div style="display:flex;gap:.8rem;align-items:center;">
+                    <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;">
                         <span style="background:rgba(255,255,255,.1);padding:4px 12px;border-radius:8px;font-size:.8rem;color:rgba(255,255,255,.8);">🏷️ {{ $workout->type }}</span>
                         <span style="background:rgba(255,255,255,.1);padding:4px 12px;border-radius:8px;font-size:.8rem;color:rgba(255,255,255,.8);">📊 {{ $workout->difficulty }}</span>
                         @if($workout->duration_minutes)
                             <span style="background:rgba(255,255,255,.1);padding:4px 12px;border-radius:8px;font-size:.8rem;color:rgba(255,255,255,.8);">⏱️ {{ $workout->duration_minutes }} mins</span>
                         @endif
+                        <a href="{{ route('music.index') }}" target="_blank" style="background:rgba(236,72,153,.2);padding:4px 12px;border-radius:8px;font-size:.8rem;color:#f9a8d4;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(236,72,153,.3);transition:all .2s;" onmouseover="this.style.background='rgba(236,72,153,.3)'" onmouseout="this.style.background='rgba(236,72,153,.2)'">
+                            🎵 Music Player
+                        </a>
                     </div>
                 </div>
                 @if($workout->completed_at)

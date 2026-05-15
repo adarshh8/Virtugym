@@ -11,25 +11,44 @@ use Illuminate\Support\Facades\Auth;
 
 class WorkoutController extends Controller
 {
-public function index()
-{
-    $user = Auth::user();
-    
-    if ($user->role === 'trainer') {
-        // Trainer sees workouts they created
-        $workouts = Workout::where('trainer_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-    } else {
-        // Trainee sees workouts assigned to them
-        $workouts = Workout::where('trainee_id', $user->id)
-            ->orWhere('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+    public function index()
+    {
+        $user = Auth::user();
+        
+        if ($user->role === 'trainer') {
+            // Trainer sees workouts they created
+            $workouts = Workout::where('trainer_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+            
+            // Get trainer's clients
+            $clients = Booking::where('trainer_id', $user->id)
+                ->whereIn('status', ['confirmed', 'completed'])
+                ->with('trainee')
+                ->get()
+                ->pluck('trainee')
+                ->filter()
+                ->unique('id');
+        } else {
+            // Trainee sees workouts assigned to them
+            $workouts = Workout::where('trainee_id', $user->id)
+                ->orWhere('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+            
+            $clients = collect();
+        }
+
+        $exercises = Exercise::orderBy('name')->get();
+        
+        // Get next workout for "Continue Plan" button
+        $nextWorkoutId = Workout::where('user_id', $user->id)
+            ->whereNull('completed_at')
+            ->orderBy('scheduled_date', 'asc')
+            ->first()?->id;
+        
+        return view('workouts.index', compact('workouts', 'exercises', 'clients', 'nextWorkoutId'));
     }
-    
-    return view('workouts.index', compact('workouts'));
-}
     
     public function create()
     {
@@ -53,12 +72,9 @@ public function index()
     
     public function store(Request $request)
 {
-    if (Auth::user()->role !== 'trainer') {
-        return redirect()->route('workouts.index')->with('error', 'Only trainers can create workouts.');
-    }
-
-    $request->validate([
-        'trainee_id' => 'required|exists:users,_id',
+    $isTrainer = Auth::user()->role === 'trainer';
+    
+    $rules = [
         'title' => 'required|string|max:255',
         'type' => 'required|string',
         'difficulty' => 'required|string',
@@ -67,14 +83,21 @@ public function index()
         'exercises.*.exercise_id' => 'required|exists:exercises,_id',
         'exercises.*.sets' => 'required|integer|min:1',
         'exercises.*.reps' => 'required|integer|min:1',
-        'exercises.*.target_weight' => 'nullable|numeric',
-    ]);
+    ];
+
+    if ($isTrainer) {
+        $rules['trainee_id'] = 'required|exists:users,_id';
+    }
+
+    $request->validate($rules);
+    
+    $trainee_id = $isTrainer ? $request->trainee_id : Auth::id();
     
     $workout = Workout::create([
-        'trainer_id' => Auth::id(),
-        'trainee_id' => $request->trainee_id,
-        'user_id' => $request->trainee_id, // For trainee to view
-        'assigned_by' => Auth::id(),
+        'trainer_id' => $isTrainer ? Auth::id() : null,
+        'trainee_id' => $trainee_id,
+        'user_id' => $trainee_id, 
+        'assigned_by' => $isTrainer ? Auth::id() : null,
         'title' => $request->title,
         'type' => $request->type,
         'difficulty' => $request->difficulty,
@@ -83,8 +106,8 @@ public function index()
         'scheduled_date' => $request->scheduled_date ?? now(),
     ]);
     
-    return redirect()->route('workouts.show', $workout->id)
-        ->with('success', 'Workout assigned to trainee successfully!');
+    return redirect()->route('workouts.index')
+        ->with('success', 'Workout created successfully!');
 }
     
     public function show($id)
@@ -124,52 +147,62 @@ public function index()
     
     public function edit($id)
     {
-        if (Auth::user()->role !== 'trainer') {
-            return redirect()->route('workouts.index')->with('error', 'Only trainers can edit workouts.');
+        $user = Auth::user();
+        $workout = Workout::findOrFail($id);
+
+        // Allow edit if trainer created it or trainee owns it (for self-created workouts)
+        if (($user->role === 'trainer' && (string) $workout->trainer_id === (string) $user->id) || 
+            ($user->role === 'trainee' && (string) $workout->user_id === (string) $user->id && !$workout->assigned_by)) {
+            $exercises = Exercise::orderBy('name')->get();
+            return view('workouts.edit', compact('workout', 'exercises'));
         }
 
-        $workout = Workout::where('trainer_id', Auth::id())->findOrFail($id);
-        $exercises = Exercise::orderBy('name')->get();
-        return view('workouts.edit', compact('workout', 'exercises'));
+        return redirect()->route('workouts.index')->with('error', 'Only owners can edit workouts.');
     }
     
     public function update(Request $request, $id)
     {
-        if (Auth::user()->role !== 'trainer') {
-            return redirect()->route('workouts.index')->with('error', 'Only trainers can edit workouts.');
+        $user = Auth::user();
+        $workout = Workout::findOrFail($id);
+
+        // Allow update if trainer created it or trainee owns it (for self-created workouts)
+        if (($user->role === 'trainer' && (string) $workout->trainer_id === (string) $user->id) || 
+            ($user->role === 'trainee' && (string) $workout->user_id === (string) $user->id && !$workout->assigned_by)) {
+            
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'type' => 'required|string',
+                'difficulty' => 'required|string',
+                'duration_minutes' => 'nullable|integer',
+                'exercises' => 'required|array',
+                'exercises.*.exercise_id' => 'required|exists:exercises,_id',
+                'exercises.*.sets' => 'required|integer|min:1',
+                'exercises.*.reps' => 'required|integer|min:1',
+                'exercises.*.target_weight' => 'nullable|numeric',
+            ]);
+            
+            $workout->update($request->only(['title', 'type', 'difficulty', 'duration_minutes', 'exercises']));
+            
+            return redirect()->route('workouts.show', $workout->id)
+                ->with('success', 'Workout updated successfully!');
         }
 
-        $workout = Workout::where('trainer_id', Auth::id())->findOrFail($id);
-        
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'type' => 'required|string',
-            'difficulty' => 'required|string',
-            'duration_minutes' => 'nullable|integer',
-            'exercises' => 'required|array',
-            'exercises.*.exercise_id' => 'required|exists:exercises,_id',
-            'exercises.*.sets' => 'required|integer|min:1',
-            'exercises.*.reps' => 'required|integer|min:1',
-            'exercises.*.target_weight' => 'nullable|numeric',
-        ]);
-        
-        $workout->update($request->only(['title', 'type', 'difficulty', 'duration_minutes', 'exercises']));
-        
-        return redirect()->route('workouts.show', $workout->id)
-            ->with('success', 'Workout updated successfully!');
+        return redirect()->route('workouts.index')->with('error', 'Only owners can edit workouts.');
     }
     
     public function destroy($id)
     {
-        if (Auth::user()->role !== 'trainer') {
-            return redirect()->route('workouts.index')->with('error', 'Only trainers can delete workouts.');
+        $user = Auth::user();
+        $workout = Workout::findOrFail($id);
+
+        // Allow deletion if trainer created it or trainee owns it (for self-created workouts)
+        if (($user->role === 'trainer' && (string) $workout->trainer_id === (string) $user->id) || 
+            ($user->role === 'trainee' && (string) $workout->user_id === (string) $user->id && !$workout->assigned_by)) {
+            $workout->delete();
+            return redirect()->route('workouts.index')->with('success', 'Workout deleted successfully!');
         }
 
-        $workout = Workout::where('trainer_id', Auth::id())->findOrFail($id);
-        $workout->delete();
-        
-        return redirect()->route('workouts.index')
-            ->with('success', 'Workout deleted successfully!');
+        return redirect()->route('workouts.index')->with('error', 'Only owners can delete workouts.');
     }
     
     public function complete(Request $request, $id)
@@ -184,5 +217,92 @@ public function index()
         
         return redirect()->route('workouts.show', $workout->id)
             ->with('success', 'Great job! Workout completed! 🎉 Analytics have been updated.');
+    }
+    public function useTemplate(Request $request)
+    {
+        $templateName = $request->template_name;
+        $user = Auth::user();
+        
+        // Define template data
+        $templates = [
+            'Push Pull Legs (PPL)' => [
+                'type' => 'Strength',
+                'difficulty' => 'Intermediate',
+                'duration_minutes' => 65,
+                'exercises' => [
+                    ['name' => 'Bench Press', 'sets' => 4, 'reps' => 10],
+                    ['name' => 'Shoulder Press', 'sets' => 3, 'reps' => 12],
+                    ['name' => 'Lateral Raises', 'sets' => 3, 'reps' => 15],
+                    ['name' => 'Triceps Pushdowns', 'sets' => 3, 'reps' => 12],
+                ]
+            ],
+            'Full Body Ignition' => [
+                'type' => 'Strength',
+                'difficulty' => 'Beginner',
+                'duration_minutes' => 45,
+                'exercises' => [
+                    ['name' => 'Squats', 'sets' => 3, 'reps' => 12],
+                    ['name' => 'Push Ups', 'sets' => 3, 'reps' => 15],
+                    ['name' => 'Pull Ups', 'sets' => 3, 'reps' => 10],
+                    ['name' => 'Plank', 'sets' => 3, 'reps' => 60],
+                ]
+            ],
+            'HIIT Cardio Burn' => [
+                'type' => 'HIIT',
+                'difficulty' => 'Advanced',
+                'duration_minutes' => 20,
+                'exercises' => [
+                    ['name' => 'Burpees', 'sets' => 4, 'reps' => 20],
+                    ['name' => 'Mountain Climbers', 'sets' => 4, 'reps' => 30],
+                    ['name' => 'Jump Squats', 'sets' => 4, 'reps' => 15],
+                ]
+            ],
+            'Lower Body Focus' => [
+                'type' => 'Strength',
+                'difficulty' => 'Intermediate',
+                'duration_minutes' => 55,
+                'exercises' => [
+                    ['name' => 'Deadlifts', 'sets' => 4, 'reps' => 8],
+                    ['name' => 'Leg Press', 'sets' => 3, 'reps' => 12],
+                    ['name' => 'Lunges', 'sets' => 3, 'reps' => 12],
+                ]
+            ]
+        ];
+
+        if (!isset($templates[$templateName])) {
+            return redirect()->back()->with('error', 'Template not found.');
+        }
+
+        $template = $templates[$templateName];
+        
+        // Find exercise IDs for names
+        $formattedExercises = [];
+        foreach ($template['exercises'] as $exData) {
+            $exercise = Exercise::where('name', 'LIKE', '%' . $exData['name'] . '%')->first();
+            if ($exercise) {
+                $formattedExercises[] = [
+                    'exercise_id' => (string) $exercise->id,
+                    'sets' => $exData['sets'],
+                    'reps' => $exData['reps'],
+                ];
+            }
+        }
+
+        if (empty($formattedExercises)) {
+            return redirect()->back()->with('error', 'No valid exercises found in this template. Please check the exercise library.');
+        }
+
+        $workout = Workout::create([
+            'user_id' => $user->id,
+            'trainee_id' => $user->id,
+            'title' => $templateName,
+            'type' => $template['type'],
+            'difficulty' => $template['difficulty'],
+            'duration_minutes' => $template['duration_minutes'],
+            'exercises' => $formattedExercises,
+            'scheduled_date' => now(),
+        ]);
+
+        return redirect()->route('workouts.index')->with('success', "Template '$templateName' added to your workouts!");
     }
 }

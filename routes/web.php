@@ -55,6 +55,7 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
     // Workouts
     Route::resource('workouts', WorkoutController::class);
     Route::post('/workouts/{id}/complete', [WorkoutController::class, 'complete'])->name('workouts.complete');
+    Route::post('/workouts/use-template', [WorkoutController::class, 'useTemplate'])->name('workouts.use-template');
 
     // Exercises
     Route::resource('exercises', ExerciseController::class);

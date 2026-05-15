@@ -3,89 +3,95 @@
 @section('title', 'My Bookings')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">My Bookings 📅</h1>
-    
-    @if(session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded">
-            {{ session('success') }}
-        </div>
-    @endif
-    
-    @if(isset($bookings) && $bookings->count() > 0)
-        <div class="space-y-4">
-            @foreach($bookings as $booking)
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <div class="flex flex-wrap justify-between items-start">
-                        <div>
-                            @if(Auth::user()->role == 'trainer')
-                                <h3 class="text-xl font-bold text-purple-600">{{ $booking->trainee->name ?? 'Trainee' }}</h3>
-                                <p class="text-sm text-gray-500">Trainee</p>
-                            @else
-                                <h3 class="text-xl font-bold text-purple-600">{{ $booking->trainer->name ?? 'Trainer' }}</h3>
-                                <p class="text-sm text-gray-500">{{ $booking->trainer->specialization ?? 'Personal Trainer' }}</p>
-                            @endif
-                            
-                            <p class="text-gray-600 mt-2">
-                                📅 {{ \Carbon\Carbon::parse($booking->session_date)->format('F d, Y') }} at 
-                                ⏰ {{ \Carbon\Carbon::parse($booking->session_date)->format('h:i A') }}
-                            </p>
-                            <p class="text-gray-600">
-                                ⏱️ {{ $booking->duration_minutes }} minutes • 
-                                💰 ₹{{ number_format($booking->amount) }}
-                            </p>
-                            @if($booking->special_requests)
-                                <p class="text-gray-500 text-sm mt-1">📝 {{ $booking->special_requests }}</p>
-                            @endif
-                        </div>
-                        
-                        <div class="text-right">
-                            @php
-                                $sessionTime = strtotime($booking->session_date);
-                                $now = time();
-                                $canJoin = ($now >= $sessionTime - 900); // 15 minutes before
-                                $isUpcoming = ($sessionTime > $now);
-                            @endphp
-                            
-<<<<<<< Updated upstream
-                            @if($booking->status == 'confirmed')
-                                <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">✓ Confirmed</span>
-                                
-                                <!-- Video Call Button - Shows for BOTH Trainer and Trainee -->
-                                @if($canJoin)
-                                    <a href="{{ route('video-call.join', $booking->id) }}" 
-                                       class="mt-2 inline-block bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition">
-                                        🎥 Join Video Session
-                                    </a>
-                                @elseif($isUpcoming)
-                                    <p class="text-xs text-gray-400 mt-2">
-                                        ⏰ Session available {{ ceil(($sessionTime - 900 - $now) / 60) }} minutes before scheduled time
-                                    </p>
-                                @else
-                                    <p class="text-xs text-gray-400 mt-2">
-                                        ⏰ Session time has passed
-                                    </p>
-                                @endif
+<style>
+    .tab-btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: .85rem;
+        font-weight: 600;
+        color: var(--vg-text-muted);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .tab-btn.active {
+        background: var(--vg-accent-soft);
+        color: var(--vg-text-strong);
+    }
+    .tab-btn:hover:not(.active) {
+        color: var(--vg-text-strong);
+    }
+    .booking-card {
+        background: var(--vg-panel);
+        border: 1px solid var(--vg-border);
+        border-radius: 20px;
+        padding: 1.6rem;
+        margin-bottom: 1.2rem;
+        transition: all 0.3s;
+    }
+    .booking-card:hover {
+        border-color: var(--vg-border-strong);
+        transform: translateY(-2px);
+    }
+    .past-session-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: var(--vg-panel);
+        border: 1px solid var(--vg-border);
+        border-radius: 16px;
+        margin-bottom: .8rem;
+    }
+    @media(max-width: 768px) {
+        .layout-container { flex-direction: column; }
+        .summary-panel { width: 100% !important; order: -1; margin-bottom: 2rem; }
+        .past-session-item { flex-direction: column; align-items: flex-start; gap: 1rem; }
+        .past-action-btn { width: 100%; text-align: center; }
+    }
+</style>
 
-                                @if(Auth::user()->role == 'trainee')
-                                    <a href="{{ route('music.index') }}"
-                                       class="mt-2 inline-block bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition">
-                                        🎵 Workout Music
-                                    </a>
-                                @endif
-                                
-                                <!-- Trainer Status Update -->
-                                @if(Auth::user()->role == 'trainer')
-                                    <form method="POST" action="{{ route('bookings.update', $booking->id) }}" class="mt-2">
-                                        @csrf
-                                        @method('PUT')
-                                        <select name="status" onchange="this.form.submit()" class="border rounded-lg px-2 py-1 text-sm">
-                                            <option value="confirmed" selected>Confirmed</option>
-                                            <option value="completed">Completed</option>
-                                            <option value="cancelled">Cancelled</option>
-                                        </select>
-=======
-                            {{-- Info Section --}}
+<div class="layout-container" style="max-width:1400px;margin:0 auto;display:flex;gap:2rem;align-items:flex-start;">
+    <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
+            <div>
+                <h1 style="font-size:1.8rem;font-weight:900;background:var(--vg-title-gradient);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:.3rem;">My Bookings 📅</h1>
+                <p style="color:var(--vg-text-muted);font-size:.85rem;">Manage your training sessions</p>
+            </div>
+
+            <div style="display:flex;gap:4px;background:var(--vg-sidebar);padding:6px;border-radius:12px;border:1px solid var(--vg-border);">
+                <button onclick="switchTab('upcoming')" id="tab-upcoming" class="tab-btn active">Upcoming</button>
+                <button onclick="switchTab('past')" id="tab-past" class="tab-btn">Past</button>
+                <button onclick="switchTab('cancelled')" id="tab-cancelled" class="tab-btn">Cancelled</button>
+            </div>
+        </div>
+
+        @if(session('success'))
+            <div style="background:rgba(16,185,129,.1);border-left:4px solid #10b981;color:#10b981;padding:1rem;border-radius:8px;margin-bottom:1.5rem;font-size:.85rem;font-weight:600;">
+                {{ session('success') }}
+            </div>
+        @endif
+        @if(session('error'))
+            <div style="background:rgba(244,63,94,.1);border-left:4px solid #f43f5e;color:#f43f5e;padding:1rem;border-radius:8px;margin-bottom:1.5rem;font-size:.85rem;font-weight:600;">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        <div id="content-upcoming" style="display:block;" class="fade-in-up">
+            @if(isset($upcomingBookings) && $upcomingBookings->count() > 0)
+                @foreach($upcomingBookings as $booking)
+                    @php
+                        $session = \Carbon\Carbon::parse($booking->session_date);
+                        $joinAt = $session->copy()->subMinutes(15);
+                        $canJoin = now()->greaterThanOrEqualTo($joinAt);
+                        $partner = $isTrainer ? ($booking->trainee ?? null) : ($booking->trainer ?? null);
+                        $partnerName = $partner ? $partner->name : ($isTrainer ? 'Trainee' : 'Trainer');
+                        $initial = substr($partnerName, 0, 1);
+                        $avatarColor = (crc32($booking->id ?? '1') % 2 == 0) ? '#8b5cf6' : '#10b981';
+                    @endphp
+                    <div class="booking-card">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1.5rem;">
                             <div style="display:flex;gap:1rem;align-items:flex-start;">
                                 <div style="width:50px;height:50px;border-radius:50%;background:{{ $avatarColor }};display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:#fff;flex-shrink:0;">
                                     {{ $initial }}
@@ -98,11 +104,11 @@
                                             <span style="font-size:.65rem;background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3);padding:2px 8px;border-radius:50px;font-weight:600;">★ {{ optional($partner)->rating ?? '5.0' }}</span>
                                         @endif
                                     </div>
-                                    
+
                                     <div style="display:flex;gap:1.5rem;margin-top:10px;flex-wrap:wrap;">
                                         <div>
                                             <p style="font-size:.7rem;color:var(--vg-text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Date & Time</p>
-                                            <p style="font-size:.85rem;color:var(--vg-text-strong);font-weight:600;">{{ \Carbon\Carbon::parse($booking->session_date)->format('M d, Y • h:i A') }}</p>
+                                            <p style="font-size:.85rem;color:var(--vg-text-strong);font-weight:600;">{{ $session->format('M d, Y • h:i A') }}</p>
                                         </div>
                                         <div>
                                             <p style="font-size:.7rem;color:var(--vg-text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Duration</p>
@@ -115,42 +121,34 @@
                                     </div>
                                 </div>
                             </div>
-                            
-                            {{-- Action Section --}}
+
                             <div style="text-align:right;min-width:200px;">
                                 <div style="margin-bottom:1rem;">
                                     <span style="display:inline-block;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3);padding:4px 12px;border-radius:50px;font-size:.75rem;font-weight:700;">✓ Confirmed</span>
                                 </div>
-                                
-                                <a href="{{ route('video-call.join', $booking->id) }}" style="display:inline-block;width:100%;text-align:center;background:var(--vg-accent);color:var(--vg-text-strong);padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none;margin-bottom:8px;transition:all .2s;" onmouseover="this.style.background='var(--vg-accent-glow)'" onmouseout="this.style.background='var(--vg-accent)'">
-                                    🎥 Join Video Session
-                                </a>
 
-                                @if(!$canJoin)
+                                @if($canJoin)
+                                    <a href="{{ route('video-call.join', $booking->id) }}" style="display:inline-block;width:100%;text-align:center;background:var(--vg-accent);color:var(--vg-text-strong);padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none;margin-bottom:8px;transition:all .2s;" onmouseover="this.style.background='var(--vg-accent-glow)'" onmouseout="this.style.background='var(--vg-accent)'">
+                                        🎥 Join Video Session
+                                    </a>
+                                @else
                                     @php
-                                        $d = \Carbon\Carbon::parse($booking->session_date);
-                                        $joinAt = $d->copy()->subMinutes(15);
-                                        $nowDate = now();
-                                        $diff = $nowDate->diff($joinAt);
-                                        $countdown = '';
-                                        if ($joinAt->diffInDays($nowDate) > 0) {
-                                            $countdown = 'Opens in ' . $joinAt->diffInDays($nowDate) . ' days';
-                                        } else {
-                                            $countdown = 'Opens in ' . $diff->h . 'h ' . $diff->i . 'm';
-                                        }
+                                        $diff = now()->diff($joinAt);
+                                        $countdown = $joinAt->diffInDays(now()) > 0
+                                            ? 'Opens in ' . $joinAt->diffInDays(now()) . ' days'
+                                            : 'Opens in ' . $diff->h . 'h ' . $diff->i . 'm';
                                     @endphp
                                     <div style="width:100%;text-align:center;background:var(--vg-sidebar);border:1px solid var(--vg-border-strong);color:var(--vg-text-muted);padding:6px 10px;border-radius:8px;font-size:.72rem;font-weight:600;margin-bottom:8px;">
                                         ⏳ {{ $countdown }}
                                     </div>
                                 @endif
-                                
+
                                 @if($isTrainer)
                                     <form method="POST" action="{{ route('bookings.update', $booking->id) }}" style="margin-top:10px;">
                                         @csrf
                                         @method('PUT')
                                         <input type="hidden" name="status" value="completed">
                                         <button type="submit" style="width:100%;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.32);color:#6ee7b7;padding:7px 10px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;">Mark Completed</button>
->>>>>>> Stashed changes
                                     </form>
 
                                     <details style="margin-top:8px;text-align:left;">
@@ -165,13 +163,6 @@
                                         </form>
                                     </details>
                                 @endif
-<<<<<<< Updated upstream
-                                
-                            @elseif($booking->status == 'completed')
-                                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">✓ Completed</span>
-                            @elseif($booking->status == 'cancelled')
-                                <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-semibold">✗ Cancelled</span>
-=======
                             </div>
                         </div>
                     </div>
@@ -190,7 +181,6 @@
             @endif
         </div>
 
-        {{-- PAST SESSIONS TAB --}}
         <div id="content-past" style="display:none;" class="fade-in-up">
             @if(isset($pastBookings) && $pastBookings->count() > 0)
                 <div style="display:flex;flex-direction:column;">
@@ -204,7 +194,7 @@
                                 <p style="font-size:.9rem;font-weight:700;color:var(--vg-text-strong);margin-bottom:2px;">{{ $partnerName }}</p>
                                 <p style="font-size:.75rem;color:var(--vg-text-muted);">{{ \Carbon\Carbon::parse($booking->session_date)->format('M d, Y') }} • {{ $booking->duration_minutes }} min</p>
                             </div>
-                            
+
                             <div style="display:flex;gap:1.5rem;align-items:center;">
                                 <div style="text-align:right;">
                                     <p style="font-size:.85rem;color:var(--vg-text-strong);font-weight:600;">₹{{ number_format($booking->amount) }}</p>
@@ -225,7 +215,6 @@
             @endif
         </div>
 
-        {{-- CANCELLED SESSIONS TAB --}}
         <div id="content-cancelled" style="display:none;" class="fade-in-up">
             @if(isset($cancelledBookings) && $cancelledBookings->count() > 0)
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;">
@@ -246,29 +235,67 @@
                             @endif
                             @if(!$isTrainer && $partner)
                                 <a href="{{ route('book.trainer.create', $partner->id) }}" style="display:inline-block;font-size:.75rem;color:var(--vg-accent);font-weight:600;text-decoration:none;">Rebook Session →</a>
->>>>>>> Stashed changes
                             @endif
                         </div>
-                    </div>
+                    @endforeach
                 </div>
-            @endforeach
-        </div>
-        <div class="mt-6">{{ $bookings->links() }}</div>
-    @else
-        <div class="bg-white rounded-xl shadow-lg p-12 text-center">
-            <div class="text-6xl mb-4">📅</div>
-            <h3 class="text-xl font-bold text-gray-800">No bookings yet</h3>
-            <p class="text-gray-600 mt-2">
-                @if(Auth::user()->role == 'trainer')
-                    Wait for trainees to book your sessions
-                @else
-                    Book a trainer to start your fitness journey
-                @endif
-            </p>
-            @if(Auth::user()->role != 'trainer')
-                <a href="{{ route('trainee.trainers') }}" class="inline-block mt-4 bg-purple-600 text-white px-6 py-2 rounded-lg">Browse Trainers</a>
+            @else
+                <div style="text-align:center;padding:3rem 1rem;background:var(--vg-panel);border:1px dashed var(--vg-border-strong);border-radius:16px;">
+                    <div style="font-size:2rem;margin-bottom:.5rem;opacity:.4;">✅</div>
+                    <p style="color:var(--vg-text-muted);font-size:.85rem;">You have no cancelled sessions.</p>
+                </div>
             @endif
         </div>
-    @endif
+    </div>
+
+    <div class="summary-panel" style="width:300px;flex-shrink:0;">
+        @if(!$isTrainer)
+            <div style="background:var(--vg-panel);border:1px solid var(--vg-border);border-radius:20px;padding:1.6rem;position:sticky;top:2rem;">
+                <h2 style="font-size:1rem;font-weight:700;color:var(--vg-text-strong);margin-bottom:1.5rem;">📊 Monthly Summary</h2>
+
+                <div style="margin-bottom:1.5rem;">
+                    <p style="font-size:.75rem;color:var(--vg-text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Sessions Completed</p>
+                    <p style="font-size:2rem;font-weight:900;color:var(--vg-text-strong);line-height:1;">{{ $totalSessionsCompleted }}</p>
+                </div>
+
+                <div style="margin-bottom:1.5rem;">
+                    <p style="font-size:.75rem;color:var(--vg-text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Total Spent</p>
+                    <p style="font-size:2rem;font-weight:900;color:#10b981;line-height:1;">₹{{ number_format($totalSpentThisMonth) }}</p>
+                    <p style="font-size:.7rem;color:var(--vg-text-faint);margin-top:4px;">Current month ({{ now()->format('F') }})</p>
+                </div>
+
+                <div style="background:var(--vg-sidebar);border:1px solid var(--vg-border-strong);border-radius:12px;padding:1rem;text-align:center;margin-bottom:1rem;">
+                    <div style="font-size:1.5rem;margin-bottom:.5rem;">💡</div>
+                    <p style="font-size:.75rem;color:var(--vg-text-muted);line-height:1.4;">Booking sessions regularly helps maintain consistency and achieve your goals faster!</p>
+                </div>
+
+                <a href="{{ route('music.index') }}" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--vg-gradient);color:#fff;padding:12px;border-radius:12px;font-size:.85rem;font-weight:700;text-decoration:none;box-shadow:0 8px 20px var(--vg-accent-glow);transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                    <i data-lucide="music" style="width:16px;height:16px;"></i> Workout Music
+                </a>
+            </div>
+        @else
+            <div style="background:var(--vg-panel);border:1px solid var(--vg-border);border-radius:20px;padding:1.6rem;position:sticky;top:2rem;">
+                <h2 style="font-size:1rem;font-weight:700;color:var(--vg-text-strong);margin-bottom:1.5rem;">👨‍🏫 Trainer Tips</h2>
+                <ul style="list-style:none;padding:0;margin:0;font-size:.8rem;color:var(--vg-text-muted);display:flex;flex-direction:column;gap:12px;">
+                    <li style="display:flex;gap:8px;"><span style="color:var(--vg-accent);">•</span> Keep your availability updated.</li>
+                    <li style="display:flex;gap:8px;"><span style="color:var(--vg-accent);">•</span> Join video sessions 5 mins early.</li>
+                    <li style="display:flex;gap:8px;"><span style="color:var(--vg-accent);">•</span> Mark sessions as "Completed" right after finishing them.</li>
+                </ul>
+            </div>
+        @endif
+    </div>
 </div>
+
+<script>
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active');
+
+        document.getElementById('content-upcoming').style.display = 'none';
+        document.getElementById('content-past').style.display = 'none';
+        document.getElementById('content-cancelled').style.display = 'none';
+
+        document.getElementById('content-' + tabName).style.display = 'block';
+    }
+</script>
 @endsection

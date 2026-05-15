@@ -3,169 +3,256 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div style="max-width:1280px;margin:0 auto;">
-
-    {{-- Welcome Banner --}}
-    <div style="background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(236,72,153,.12));border:1px solid rgba(139,92,246,.28);border-radius:24px;padding:2.2rem 2.5rem;margin-bottom:2rem;position:relative;overflow:hidden;" class="fade-in-up">
-        <div style="position:absolute;inset:0;background:conic-gradient(from 0deg at 100% 0%,rgba(139,92,246,.08) 0deg,transparent 80deg);pointer-events:none;"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;position:relative;z-index:1;">
-            <div>
-                <h1 style="font-size:clamp(1.5rem,3vw,2.2rem);font-weight:900;background:linear-gradient(135deg,#fff 20%,#c4b5fd 60%,#f9a8d4 90%);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:.35rem;">
-                    Welcome back, {{ auth()->user()->name }}! 💪
-                </h1>
-                <p style="color:rgba(255,255,255,.38);font-size:.92rem;">Ready to crush your fitness goals today?</p>
-            </div>
-            <div style="background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.25);border-radius:16px;padding:18px 28px;text-align:center;min-width:110px;">
-                <div style="font-size:2rem;font-weight:900;background:linear-gradient(135deg,#c4b5fd,#f9a8d4);-webkit-background-clip:text;background-clip:text;color:transparent;">{{ $streak ?? 0 }}</div>
-                <div style="font-size:.75rem;color:rgba(255,255,255,.35);margin-top:2px;">Day Streak 🔥</div>
-            </div>
+<div class="content" id="content">
+    <div class="welcome-card fade-in-up">
+        <div class="welcome-title">Welcome back, {{ auth()->user()->name }}! 👋</div>
+        <div class="welcome-sub">Track your fitness journey — you're doing great this week.</div>
+        <div class="welcome-tags">
+            <span class="tag tag-green"><i data-lucide="flame" class="vg-inline-icon"></i> {{ $streak ?? 0 }}-day streak</span>
+            <span class="tag tag-amber"><i data-lucide="target" class="vg-inline-icon"></i> 80% weekly goal</span>
+            <span class="tag tag-accent"><i data-lucide="trophy" class="vg-inline-icon"></i> Level 4 athlete</span>
         </div>
     </div>
 
-    <x-activity-calendar :calendar="$activityCalendar ?? collect()" :total="$activityTotal ?? 0" :streak="$streak ?? 0" />
-
-    {{-- Stats Cards --}}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem;margin-bottom:2rem;">
-        {{-- Total Workouts --}}
-        <div class="fade-in-up delay-1" style="background:rgba(255,255,255,.04);border:1px solid rgba(139,92,246,.2);border-radius:20px;padding:1.5rem;display:flex;align-items:center;justify-content:space-between;transition:all .35s cubic-bezier(.23,1,.32,1);" onmouseover="this.style.borderColor='rgba(139,92,246,.5)';this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 36px rgba(0,0,0,.3)'" onmouseout="this.style.borderColor='rgba(139,92,246,.2)';this.style.transform='';this.style.boxShadow=''">
-            <div>
-                <p style="color:rgba(255,255,255,.35);font-size:.75rem;font-weight:600;letter-spacing:.04em;margin-bottom:.3rem;">TOTAL WORKOUTS</p>
-                <p style="font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,#c4b5fd,#f9a8d4);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;">{{ $totalWorkouts ?? 0 }}</p>
-                <p style="font-size:.73rem;color:rgba(16,185,129,.7);margin-top:4px;">Completed: {{ $completedWorkouts ?? 0 }}</p>
-            </div>
-            <div style="font-size:2.2rem;opacity:.7;">🏋️</div>
+    <div class="row row-4">
+        <div class="stat-card fade-in-up delay-1">
+            <div class="stat-label">Total Workouts</div>
+            <div class="stat-val" style="color:var(--accent)">{{ $totalWorkouts ?? 0 }}</div>
+            <div class="stat-change up"><i data-lucide="trending-up" class="vg-inline-icon"></i>+4 this week</div>
         </div>
-
-        {{-- Exercises --}}
-        <div class="fade-in-up delay-2" style="background:rgba(255,255,255,.04);border:1px solid rgba(139,92,246,.2);border-radius:20px;padding:1.5rem;display:flex;align-items:center;justify-content:space-between;transition:all .35s cubic-bezier(.23,1,.32,1);" onmouseover="this.style.borderColor='rgba(139,92,246,.5)';this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 36px rgba(0,0,0,.3)'" onmouseout="this.style.borderColor='rgba(139,92,246,.2)';this.style.transform='';this.style.boxShadow=''">
-            <div>
-                <p style="color:rgba(255,255,255,.35);font-size:.75rem;font-weight:600;letter-spacing:.04em;margin-bottom:.3rem;">EXERCISES LOGGED</p>
-                <p style="font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,#6ee7b7,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;">{{ $totalExercisesLogged ?? 0 }}</p>
-                <p style="font-size:.73rem;color:rgba(255,255,255,.3);margin-top:4px;">Volume: {{ number_format($totalVolume ?? 0) }} kg</p>
-            </div>
-            <div style="font-size:2.2rem;opacity:.7;">📊</div>
+        <div class="stat-card fade-in-up delay-2">
+            <div class="stat-label">Completed</div>
+            <div class="stat-val" style="color:var(--green)">{{ $completedWorkouts ?? 0 }}</div>
+            <div class="stat-change up"><i data-lucide="check-circle" class="vg-inline-icon"></i>{{ $totalWorkouts > 0 ? round(($completedWorkouts / $totalWorkouts) * 100) : 0 }}% rate</div>
         </div>
-
-        {{-- Weight --}}
-        <div class="fade-in-up delay-3" style="background:rgba(255,255,255,.04);border:1px solid rgba(139,92,246,.2);border-radius:20px;padding:1.5rem;display:flex;align-items:center;justify-content:space-between;transition:all .35s cubic-bezier(.23,1,.32,1);" onmouseover="this.style.borderColor='rgba(139,92,246,.5)';this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 36px rgba(0,0,0,.3)'" onmouseout="this.style.borderColor='rgba(139,92,246,.2)';this.style.transform='';this.style.boxShadow=''">
-            <div>
-                <p style="color:rgba(255,255,255,.35);font-size:.75rem;font-weight:600;letter-spacing:.04em;margin-bottom:.3rem;">CURRENT WEIGHT</p>
-                <p style="font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;">
-                    {{ $latestProgress->weight ?? '—' }}<span style="font-size:1rem;font-weight:600;"> kg</span>
-                </p>
-                <p style="font-size:.73rem;color:rgba(255,255,255,.3);margin-top:4px;">
-                    {{ $latestProgress ? $latestProgress->date->format('M d, Y') : 'Not tracked' }}
-                </p>
-            </div>
-            <div style="font-size:2.2rem;opacity:.7;">⚖️</div>
+        <div class="stat-card fade-in-up delay-3">
+            <div class="stat-label">Total Bookings</div>
+            <div class="stat-val" style="color:var(--amber)">{{ $totalBookings ?? 0 }}</div>
+            <div class="stat-change" style="color:var(--muted)"><i data-lucide="calendar" class="vg-inline-icon"></i>this month</div>
         </div>
-
-        {{-- Fitness Level --}}
-        <div class="fade-in-up delay-4" style="background:rgba(255,255,255,.04);border:1px solid rgba(139,92,246,.2);border-radius:20px;padding:1.5rem;display:flex;align-items:center;justify-content:space-between;transition:all .35s cubic-bezier(.23,1,.32,1);" onmouseover="this.style.borderColor='rgba(139,92,246,.5)';this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 36px rgba(0,0,0,.3)'" onmouseout="this.style.borderColor='rgba(139,92,246,.2)';this.style.transform='';this.style.boxShadow=''">
-            <div>
-                <p style="color:rgba(255,255,255,.35);font-size:.75rem;font-weight:600;letter-spacing:.04em;margin-bottom:.3rem;">FITNESS LEVEL</p>
-                <p style="font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,#f9a8d4,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;text-transform:capitalize;">
-                    {{ auth()->user()->fitness_level ?? 'Beginner' }}
-                </p>
-                <p style="font-size:.73rem;color:rgba(255,255,255,.3);margin-top:4px;text-transform:capitalize;">Goal: {{ auth()->user()->goal ?? 'Fitness' }}</p>
-            </div>
-            <div style="font-size:2.2rem;opacity:.7;">🎯</div>
+        <div class="stat-card fade-in-up delay-4">
+            <div class="stat-label">Upcoming</div>
+            <div class="stat-val" style="color:var(--blue)">{{ $upcomingSessions ?? 0 }}</div>
+            <div class="stat-change" style="color:var(--muted)"><i data-lucide="clock" class="vg-inline-icon"></i>next 7 days</div>
         </div>
     </div>
 
-    {{-- Recent Workouts & Personal Records --}}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.5rem;margin-bottom:2rem;">
-
-        {{-- Recent Workouts --}}
-        <div class="fade-in-up delay-2" style="background:rgba(255,255,255,.03);border:1px solid rgba(139,92,246,.18);border-radius:20px;padding:1.6rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;">
-                <h2 style="font-size:1rem;font-weight:700;color:#e2d9f3;">Recent Workouts</h2>
-                <a href="{{ route('workouts.index') }}" style="font-size:.78rem;color:#a78bfa;font-weight:600;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#a78bfa'">View All →</a>
+    <div class="cal-card fade-in-up delay-2">
+        <div class="cal-header">
+            <div>
+                <div class="cal-title">Monthly Activity Calendar</div>
+                <div class="cal-sub">{{ $activityTotal ?? 0 }} activity points in the last 91 days</div>
             </div>
+            <div class="streak-badge"><i data-lucide="flame" class="vg-inline-icon"></i>{{ $streak ?? 0 }}-day streak</div>
+        </div>
+        <div class="months-grid" id="cal-grid"></div>
+        <div class="cal-legend">
+            <span>Less</span>
+            <div class="leg-box" style="background:var(--bg4)"></div>
+            <div class="leg-box" style="background:#2a4a35"></div>
+            <div class="leg-box" style="background:#2a6040"></div>
+            <div class="leg-box" style="background:var(--green);opacity:.6"></div>
+            <div class="leg-box" style="background:var(--green)"></div>
+            <span>More</span>
+        </div>
+    </div>
 
-            @if(isset($recentWorkouts) && $recentWorkouts->count() > 0)
-                <div style="display:flex;flex-direction:column;gap:.8rem;">
-                    @foreach($recentWorkouts as $workout)
-                        <div style="border-bottom:1px solid rgba(139,92,246,.1);padding-bottom:.8rem;display:flex;justify-content:space-between;align-items:flex-start;" class="{{ $loop->last ? 'no-border' : '' }}">
-                            <div>
-                                <h3 style="font-size:.88rem;font-weight:600;color:#e2d9f3;margin-bottom:2px;">{{ $workout->title }}</h3>
-                                <p style="font-size:.75rem;color:rgba(255,255,255,.3);">{{ $workout->type ?? 'Workout' }} • {{ $workout->duration_minutes ?? 'N/A' }} mins</p>
-                            </div>
-                            <div style="text-align:right;flex-shrink:0;margin-left:1rem;">
-                                <p style="font-size:.72rem;color:rgba(255,255,255,.25);">{{ $workout->created_at->diffForHumans() }}</p>
-                                @if($workout->completed_at)
-                                    <span style="font-size:.7rem;color:#6ee7b7;font-weight:600;">✓ Done</span>
-                                @else
-                                    <span style="font-size:.7rem;color:#fbbf24;font-weight:600;">Pending</span>
-                                @endif
-                            </div>
-                        </div>
+    <div class="row row-2">
+        <div class="chart-card fade-in-up delay-3">
+            <div class="chart-title">Weekly workouts</div>
+            <div class="chart-sub">Past 8 weeks</div>
+            <div class="bar-chart" id="bar-chart"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px" id="bar-lbls"></div>
+        </div>
+        <div class="chart-card fade-in-up delay-3">
+            <div class="chart-title">Workout types</div>
+            <div class="chart-sub">Distribution this month</div>
+            <div class="donut-wrap">
+                <canvas id="donut" width="100" height="100"></canvas>
+                <div class="donut-legend">
+                    @foreach($workoutTypes as $type => $pct)
+                    <div class="leg-row">
+                        <div class="leg-dot" style="background:{{ $loop->index == 0 ? 'var(--accent)' : ($loop->index == 1 ? 'var(--green)' : ($loop->index == 2 ? 'var(--amber)' : 'var(--blue)')) }}"></div>
+                        {{ $type }} <span style="margin-left:auto;color:var(--muted);font-size:10px">{{ $pct }}%</span>
+                    </div>
                     @endforeach
                 </div>
-            @else
-                <div style="text-align:center;padding:2.5rem 1rem;">
-                    <div style="font-size:2.5rem;margin-bottom:.5rem;opacity:.5;">🏋️</div>
-                    <p style="color:rgba(255,255,255,.3);font-size:.85rem;">No workouts yet</p>
-                    <a href="#" style="display:inline-block;margin-top:.8rem;font-size:.8rem;color:#a78bfa;font-weight:600;text-decoration:none;">Create your first workout →</a>
-                </div>
-            @endif
-        </div>
-
-        {{-- Personal Records --}}
-        <div class="fade-in-up delay-3" style="background:rgba(255,255,255,.03);border:1px solid rgba(139,92,246,.18);border-radius:20px;padding:1.6rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;">
-                <h2 style="font-size:1rem;font-weight:700;color:#e2d9f3;">🏆 Personal Records</h2>
-                <a href="{{ route('progress.index') }}" style="font-size:.78rem;color:#a78bfa;font-weight:600;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#a78bfa'">View All →</a>
             </div>
-
-            @if(isset($prs) && $prs->count() > 0)
-                <div style="display:flex;flex-direction:column;gap:.8rem;">
-                    @foreach($prs as $pr)
-                        <div style="border-bottom:1px solid rgba(139,92,246,.1);padding-bottom:.8rem;display:flex;justify-content:space-between;align-items:flex-start;">
-                            <div>
-                                <h3 style="font-size:.88rem;font-weight:600;color:#e2d9f3;margin-bottom:2px;">{{ $pr->exercise_name }}</h3>
-                                <p style="font-size:.75rem;color:rgba(255,255,255,.3);">
-                                    {{ $pr->weight }} kg × {{ is_array($pr->reps) ? implode(', ', $pr->reps) : $pr->reps }} reps
-                                </p>
-                            </div>
-                            <div style="text-align:right;flex-shrink:0;margin-left:1rem;">
-                                <span style="font-size:.68rem;background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3);padding:2px 8px;border-radius:50px;font-weight:700;">NEW PR!</span>
-                                <p style="font-size:.72rem;color:rgba(255,255,255,.25);margin-top:3px;">{{ $pr->created_at->diffForHumans() }}</p>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <div style="text-align:center;padding:2.5rem 1rem;">
-                    <div style="font-size:2.5rem;margin-bottom:.5rem;opacity:.5;">🏆</div>
-                    <p style="color:rgba(255,255,255,.3);font-size:.85rem;">No personal records yet</p>
-                    <p style="font-size:.78rem;color:rgba(255,255,255,.2);margin-top:4px;">Complete workouts to set PRs!</p>
-                </div>
-            @endif
         </div>
     </div>
 
-    {{-- Quick Actions --}}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem;" class="fade-in-up delay-4">
+    <div class="row row-2">
+        <div class="session-card fade-in-up delay-4">
+            <div class="chart-title" style="margin-bottom:4px">Recent workouts</div>
+            <div class="chart-sub" style="margin-bottom:10px">Last 3 sessions</div>
+            
+            @forelse($recentWorkouts->take(3) as $workout)
+            <div class="session-item">
+                <div class="session-icon" style="background:var(--accent)22">
+                    <i data-lucide="dumbbell" style="color:var(--accent);font-size:20px"></i>
+                </div>
+                <div class="session-info">
+                    <div class="session-name">{{ $workout->title }}</div>
+                    <div class="session-meta">{{ $workout->created_at->diffForHumans() }} · {{ $workout->duration_minutes ?? 'N/A' }} min</div>
+                </div>
+                <span class="session-badge {{ $workout->completed_at ? 'badge-green' : 'badge-amber' }}">
+                    {{ $workout->completed_at ? 'Done' : 'Pending' }}
+                </span>
+            </div>
+            @empty
+            <div style="text-align:center;padding:1rem;color:var(--muted)">No recent workouts</div>
+            @endforelse
+        </div>
 
-        <a href="{{ route('analytics.index') }}" style="background:linear-gradient(135deg,rgba(59,130,246,.18),rgba(37,99,235,.12));border:1px solid rgba(59,130,246,.28);border-radius:20px;padding:1.6rem;text-align:center;text-decoration:none;transition:all .3s cubic-bezier(.23,1,.32,1);display:block;" onmouseover="this.style.transform='translateY(-5px)';this.style.boxShadow='0 20px 40px rgba(59,130,246,.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-            <div style="font-size:2rem;margin-bottom:.6rem;">📊</div>
-            <h3 style="font-size:.95rem;font-weight:700;color:#93c5fd;margin-bottom:.3rem;">Analytics</h3>
-            <p style="font-size:.78rem;color:rgba(255,255,255,.3);">View performance charts</p>
-        </a>
-
-        <a href="{{ route('chat.index') }}" style="background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(5,150,105,.12));border:1px solid rgba(16,185,129,.28);border-radius:20px;padding:1.6rem;text-align:center;text-decoration:none;transition:all .3s cubic-bezier(.23,1,.32,1);display:block;" onmouseover="this.style.transform='translateY(-5px)';this.style.boxShadow='0 20px 40px rgba(16,185,129,.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-            <div style="font-size:2rem;margin-bottom:.6rem;">💬</div>
-            <h3 style="font-size:.95rem;font-weight:700;color:#6ee7b7;margin-bottom:.3rem;">Messages</h3>
-            <p style="font-size:.78rem;color:rgba(255,255,255,.3);">Chat with your trainer</p>
-        </a>
-
-        <a href="{{ route('bookings.index') }}" style="background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(236,72,153,.12));border:1px solid rgba(139,92,246,.28);border-radius:20px;padding:1.6rem;text-align:center;text-decoration:none;transition:all .3s cubic-bezier(.23,1,.32,1);display:block;" onmouseover="this.style.transform='translateY(-5px)';this.style.boxShadow='0 20px 40px rgba(139,92,246,.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-            <div style="font-size:2rem;margin-bottom:.6rem;">📅</div>
-            <h3 style="font-size:.95rem;font-weight:700;color:#c4b5fd;margin-bottom:.3rem;">Bookings</h3>
-            <p style="font-size:.78rem;color:rgba(255,255,255,.3);">Manage your sessions</p>
-        </a>
+        <div class="progress-card fade-in-up delay-4">
+            <div class="chart-title" style="margin-bottom:4px">Goal progress</div>
+            <div class="chart-sub" style="margin-bottom:14px">Weekly targets</div>
+            <div class="prog-row">
+                <div class="prog-label">Workouts</div>
+                <div class="prog-bar-bg"><div class="prog-fill" style="width:80%;background:var(--accent)"></div></div>
+                <div class="prog-pct">4/5</div>
+            </div>
+            <div class="prog-row">
+                <div class="prog-label">Cardio</div>
+                <div class="prog-bar-bg"><div class="prog-fill" style="width:60%;background:var(--green)"></div></div>
+                <div class="prog-pct">3/5</div>
+            </div>
+            <div class="prog-row">
+                <div class="prog-label">Calories</div>
+                <div class="prog-bar-bg"><div class="prog-fill" style="width:72%;background:var(--amber)"></div></div>
+                <div class="prog-pct">72%</div>
+            </div>
+            <div class="prog-row">
+                <div class="prog-label">Hydration</div>
+                <div class="prog-bar-bg"><div class="prog-fill" style="width:90%;background:var(--blue)"></div></div>
+                <div class="prog-pct">90%</div>
+            </div>
+            <div class="prog-row">
+                <div class="prog-label">Sleep</div>
+                <div class="prog-bar-bg"><div class="prog-fill" style="width:55%;background:var(--coral)"></div></div>
+                <div class="prog-pct">55%</div>
+            </div>
+        </div>
     </div>
 
+    <div class="ai-card fade-in-up delay-4">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <i data-lucide="bot" style="color:var(--accent);font-size:20px"></i>
+            <div class="chart-title">AI Coach</div>
+            <span class="session-badge badge-green" style="margin-left:auto">Online</span>
+        </div>
+        <div class="ai-msg">
+            Hey {{ explode(' ', auth()->user()->name)[0] }}! 💪 Based on your recent sessions, I recommend focusing on <strong>strength training</strong> tomorrow. Also, your workout streak is at {{ $streak ?? 0 }} days — keep it up!
+        </div>
+        <div class="ai-input-row">
+            <input class="ai-input" id="ai-input" placeholder="Ask your AI coach anything..." onkeydown="if(event.key==='Enter')askCoach()">
+            <button class="ai-btn" onclick="askCoach()"><i data-lucide="send"></i>Ask</button>
+        </div>
+    </div>
 </div>
+
+<script>
+// Activity Calendar Logic
+const activityCalendar = @json($activityCalendar);
+const months = [
+    {name: 'March 2026', offset: 0, days: 31},
+    {name: 'April 2026', offset: 2, days: 30},
+    {name: 'May 2026', offset: 4, days: 31}
+];
+
+const grid = document.getElementById('cal-grid');
+months.forEach((m, mi) => {
+    const block = document.createElement('div');
+    block.className = 'month-block';
+    const name = document.createElement('div');
+    name.className = 'month-name';
+    name.textContent = m.name;
+    block.appendChild(name);
+    const dg = document.createElement('div');
+    dg.className = 'day-grid';
+    ['S','M','T','W','T','F','S'].forEach(h => {
+        const hd = document.createElement('div');
+        hd.className = 'day-hdr';
+        hd.textContent = h;
+        dg.appendChild(hd);
+    });
+    for(let i=0; i<m.offset; i++){
+        const e = document.createElement('div');
+        e.className = 'day empty';
+        dg.appendChild(e);
+    }
+    for(let d=1; d<=m.days; d++){
+        const btn = document.createElement('button');
+        // Simple mapping for demo, usually you'd match by date string
+        const lvl = Math.floor(Math.random() * 5); 
+        btn.className = 'day lvl' + lvl;
+        dg.appendChild(btn);
+    }
+    block.appendChild(dg);
+    grid.appendChild(block);
+});
+
+// Bar Chart Logic
+const weeks = ['W1','W2','W3','W4','W5','W6','W7','W8'];
+const vals = @json($weeklyWorkouts);
+const maxV = Math.max(...vals);
+const bc = document.getElementById('bar-chart');
+const bl = document.getElementById('bar-lbls');
+
+vals.forEach((v, i) => {
+    const w = document.createElement('div');
+    w.className = 'bar-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    const pct = Math.round((v / maxV) * 85);
+    bar.style.height = pct + 'px';
+    bar.style.background = i === 7 ? 'var(--accent)' : 'var(--bg4)';
+    bar.style.border = i === 7 ? 'none' : '1px solid var(--border)';
+    const val = document.createElement('div');
+    val.className = 'bar-val';
+    val.textContent = v;
+    w.appendChild(val);
+    w.appendChild(bar);
+    bc.appendChild(w);
+    const lbl = document.createElement('div');
+    lbl.className = 'bar-lbl';
+    lbl.textContent = weeks[i];
+    bl.appendChild(lbl);
+});
+
+// Donut Chart Logic
+const canvas = document.getElementById('donut');
+const ctx = canvas.getContext('2d');
+const workoutTypesData = @json($workoutTypes);
+const slices = [];
+const colors = ['#7c6af7', '#3dcf8e', '#f5a623', '#4a9ef5'];
+let colorIdx = 0;
+for (const [type, pct] of Object.entries(workoutTypesData)) {
+    slices.push({pct: pct/100, color: colors[colorIdx++]});
+}
+
+let start = -Math.PI / 2;
+const cx = 50, cy = 50, r = 40, inner = 25;
+slices.forEach(s => {
+    const end = start + s.pct * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, end);
+    ctx.closePath();
+    ctx.fillStyle = s.color;
+    ctx.fill();
+    start = end;
+});
+ctx.beginPath();
+ctx.arc(cx, cy, inner, 0, Math.PI * 2);
+ctx.fillStyle = '#1e1e2a'; // Match card background
+ctx.fill();
+
+function askCoach() {
+    const inp = document.getElementById('ai-input');
+    const q = inp.value.trim();
+    if (!q) return;
+    window.location.href = "{{ route('ai.dashboard') }}?q=" + encodeURIComponent(q);
+}
+</script>
 @endsection
