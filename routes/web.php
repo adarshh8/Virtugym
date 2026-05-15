@@ -13,6 +13,9 @@ use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\AIController;
 use App\Http\Controllers\MusicController;
+use App\Http\Controllers\WaterIntakeController;
+use App\Http\Controllers\MindfulnessController;
+use App\Http\Controllers\ProgressReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -68,6 +71,17 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
     Route::get('/music', [MusicController::class, 'index'])->name('music.index');
     Route::get('/music/search', [MusicController::class, 'search'])->name('music.search');
     Route::get('/music/default-track', [MusicController::class, 'defaultTrack'])->name('music.default');
+    
+    // Water Intake
+    Route::get('/water', [WaterIntakeController::class, 'index'])->name('water.index');
+    Route::post('/water', [WaterIntakeController::class, 'store'])->name('water.store');
+
+    // Mindfulness & Recovery
+    Route::get('/mindfulness', [MindfulnessController::class, 'index'])->name('mindfulness.index');
+    Route::get('/mindfulness/{id}', [MindfulnessController::class, 'show'])->name('mindfulness.show');
+
+    // Progress Reports
+    Route::get('/progress/report', [ProgressReportController::class, 'index'])->name('progress.report');
     
     // Profile
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');

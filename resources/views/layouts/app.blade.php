@@ -653,6 +653,18 @@
                     <span class="s-icon"><i data-lucide="music"></i></span><span>Workout Music</span>
                 </a>
 
+                <a href="{{ route('water.index') }}" class="sidebar-item {{ request()->routeIs('water.*') ? 'active' : '' }}">
+                    <span class="s-icon"><i data-lucide="droplets"></i></span><span>Water Tracker</span>
+                </a>
+
+                <a href="{{ route('mindfulness.index') }}" class="sidebar-item {{ request()->routeIs('mindfulness.*') ? 'active' : '' }}">
+                    <span class="s-icon"><i data-lucide="leaf"></i></span><span>Mindfulness</span>
+                </a>
+
+                <a href="{{ route('progress.report') }}" class="sidebar-item {{ request()->routeIs('progress.report') ? 'active' : '' }}">
+                    <span class="s-icon"><i data-lucide="file-chart-column"></i></span><span>Progress Report</span>
+                </a>
+
                 @if(Auth::user()->role == 'trainer')
                 <a href="{{ route('trainer.availability.index') }}" class="sidebar-item {{ request()->routeIs('trainer.availability.*') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="clock"></i></span><span>Availability</span>
