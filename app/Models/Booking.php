@@ -14,16 +14,21 @@ class Booking extends Model
         'duration_minutes', 'status', 'amount', 'payment_id',
         'special_requests', 'cancelled_at', 'completed_at',
         'cancelled_by', 'cancellation_reason',
-        'meeting_id', 'meeting_link', 'meeting_started', 'meeting_ended'
+        'cancellation_policy', 'refund_status', 'refund_amount',
+        'refund_reference', 'refund_requested_at', 'refund_processed_at', 'refund_error',
+        'refund_upi_id', 'meeting_id', 'meeting_link', 'meeting_started', 'meeting_ended'
     ];
     
     protected $casts = [
         'session_date' => 'datetime',
         'amount' => 'float',
+        'refund_amount' => 'float',
         'cancelled_at' => 'datetime',
         'completed_at' => 'datetime',
+        'refund_requested_at' => 'datetime',
+        'refund_processed_at' => 'datetime',
         'meeting_started' => 'boolean',
-'meeting_ended' => 'boolean',
+        'meeting_ended' => 'boolean',
     ];
     
     // Relationships (CO6 - Eloquent ORM Relationships)

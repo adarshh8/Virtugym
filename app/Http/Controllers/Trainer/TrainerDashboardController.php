@@ -16,7 +16,8 @@ class TrainerDashboardController extends Controller
     
     // Get upcoming bookings
     $upcomingBookings = Booking::where('trainer_id', $trainer->id)
-        ->where('session_date', '>', now())
+        ->where('status', 'confirmed')
+        ->where('session_date', '>=', now()->subHours(3))
         ->with('trainee')
         ->orderBy('session_date', 'asc')
         ->limit(5)

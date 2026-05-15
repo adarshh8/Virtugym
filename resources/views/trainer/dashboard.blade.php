@@ -51,9 +51,19 @@
             @if(isset($upcomingBookings) && $upcomingBookings->count() > 0)
                 <div style="display:flex;flex-direction:column;gap:.8rem;">
                     @foreach($upcomingBookings as $booking)
-                        <div style="border-bottom:1px solid rgba(139,92,246,.1);padding-bottom:.8rem;">
+                        @php
+                            $sessionDate = \Carbon\Carbon::parse($booking->session_date);
+                            $joinAt = $sessionDate->copy()->subMinutes(10);
+                            $canJoin = now()->greaterThanOrEqualTo($joinAt);
+                        @endphp
+                        <div style="border-bottom:1px solid rgba(139,92,246,.1);padding-bottom:.8rem;position:relative;">
                             <p style="font-size:.88rem;font-weight:600;color:#e2d9f3;margin-bottom:2px;">{{ $booking->trainee->name ?? 'Trainee' }}</p>
-                            <p style="font-size:.75rem;color:rgba(255,255,255,.3);">{{ \Carbon\Carbon::parse($booking->session_date)->format('M d, Y h:i A') }}</p>
+                            <p style="font-size:.75rem;color:rgba(255,255,255,.3);">{{ $sessionDate->format('M d, Y h:i A') }}</p>
+                            @if($canJoin)
+                                <a href="{{ route('video-call.join', $booking->id) }}" style="font-size:.7rem;color:#6ee7b7;font-weight:700;position:absolute;bottom:0.8rem;right:0;text-decoration:none;">Join Session</a>
+                            @else
+                                <span style="font-size:.7rem;color:#fca5a5;font-weight:600;position:absolute;bottom:0.8rem;right:0;">Opens {{ $joinAt->format('h:i A') }}</span>
+                            @endif
                         </div>
                     @endforeach
                 </div>

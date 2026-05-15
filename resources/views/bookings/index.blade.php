@@ -83,7 +83,7 @@
                 @foreach($upcomingBookings as $booking)
                     @php
                         $session = \Carbon\Carbon::parse($booking->session_date);
-                        $joinAt = $session->copy()->subMinutes(15);
+                        $joinAt = $session->copy()->subMinutes(10);
                         $canJoin = now()->greaterThanOrEqualTo($joinAt);
                         $partner = $isTrainer ? ($booking->trainee ?? null) : ($booking->trainer ?? null);
                         $partnerName = $partner ? $partner->name : ($isTrainer ? 'Trainee' : 'Trainer');
@@ -134,12 +134,13 @@
                                 @else
                                     @php
                                         $diff = now()->diff($joinAt);
-                                        $countdown = $joinAt->diffInDays(now()) > 0
-                                            ? 'Opens in ' . $joinAt->diffInDays(now()) . ' days'
+                                        $countdown = now()->diffInDays($joinAt, false) > 0
+                                            ? 'Opens in ' . now()->diffInDays($joinAt) . ' days'
                                             : 'Opens in ' . $diff->h . 'h ' . $diff->i . 'm';
                                     @endphp
-                                    <div style="width:100%;text-align:center;background:var(--vg-sidebar);border:1px solid var(--vg-border-strong);color:var(--vg-text-muted);padding:6px 10px;border-radius:8px;font-size:.72rem;font-weight:600;margin-bottom:8px;">
-                                        ⏳ {{ $countdown }}
+                                    <div style="width:100%;text-align:center;background:var(--vg-sidebar);border:1px solid var(--vg-border-strong);color:var(--vg-text-muted);padding:8px 10px;border-radius:8px;font-size:.72rem;font-weight:700;margin-bottom:8px;">
+                                        🎥 Join opens {{ $joinAt->format('M d, h:i A') }}<br>
+                                        <span style="font-weight:600;font-size:.68rem;">{{ $countdown }}</span>
                                     </div>
                                 @endif
 
@@ -150,19 +151,22 @@
                                         <input type="hidden" name="status" value="completed">
                                         <button type="submit" style="width:100%;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.32);color:#6ee7b7;padding:7px 10px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;">Mark Completed</button>
                                     </form>
-
-                                    <details style="margin-top:8px;text-align:left;">
-                                        <summary style="list-style:none;cursor:pointer;width:100%;text-align:center;background:transparent;border:1px solid rgba(244,63,94,.4);color:#f43f5e;padding:7px 10px;border-radius:8px;font-size:.75rem;font-weight:700;">Cancel Session</summary>
-                                        <form method="POST" action="{{ route('bookings.update', $booking->id) }}" style="margin-top:8px;background:var(--vg-sidebar);border:1px solid var(--vg-border);border-radius:10px;padding:10px;">
-                                            @csrf
-                                            @method('PUT')
-                                            <input type="hidden" name="status" value="cancelled">
-                                            <label style="display:block;font-size:.7rem;color:var(--vg-text-muted);font-weight:700;margin-bottom:5px;">Reason shared with trainee</label>
-                                            <textarea name="cancellation_reason" rows="3" required minlength="5" maxlength="500" placeholder="Explain why this session is being cancelled..." style="width:100%;background:var(--vg-panel);border:1px solid var(--vg-border);color:var(--vg-text-strong);border-radius:8px;padding:8px;font-size:.75rem;resize:vertical;margin-bottom:8px;"></textarea>
-                                            <button type="submit" style="width:100%;background:rgba(244,63,94,.14);border:1px solid rgba(244,63,94,.38);color:#fb7185;padding:7px 10px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;">Confirm Cancellation</button>
-                                        </form>
-                                    </details>
                                 @endif
+
+                                <details style="margin-top:8px;text-align:left;">
+                                    <summary style="list-style:none;cursor:pointer;width:100%;text-align:center;background:transparent;border:1px solid rgba(244,63,94,.4);color:#f43f5e;padding:7px 10px;border-radius:8px;font-size:.75rem;font-weight:700;">Cancel Session</summary>
+                                    <form method="POST" action="{{ route('bookings.update', $booking->id) }}" style="margin-top:8px;background:var(--vg-sidebar);border:1px solid var(--vg-border);border-radius:10px;padding:10px;">
+                                        @csrf
+                                        @method('PUT')
+                                        <input type="hidden" name="status" value="cancelled">
+                                        <div style="font-size:.7rem;color:{{ $isTrainer ? '#6ee7b7' : '#fb7185' }};line-height:1.4;margin-bottom:8px;">
+                                            {{ $isTrainer ? 'Trainer cancellation will send a refund request to admin for this trainee.' : 'Trainee cancellation is not eligible for a refund.' }}
+                                        </div>
+                                        <label style="display:block;font-size:.7rem;color:var(--vg-text-muted);font-weight:700;margin-bottom:5px;">Reason shared with {{ $isTrainer ? 'trainee' : 'trainer' }}</label>
+                                        <textarea name="cancellation_reason" rows="3" required minlength="5" maxlength="500" placeholder="Explain why this session is being cancelled..." style="width:100%;background:var(--vg-panel);border:1px solid var(--vg-border);color:var(--vg-text-strong);border-radius:8px;padding:8px;font-size:.75rem;resize:vertical;margin-bottom:8px;"></textarea>
+                                        <button type="submit" style="width:100%;background:rgba(244,63,94,.14);border:1px solid rgba(244,63,94,.38);color:#fb7185;padding:7px 10px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;">Confirm Cancellation</button>
+                                    </form>
+                                </details>
                             </div>
                         </div>
                     </div>
@@ -233,6 +237,26 @@
                                     <p style="font-size:.8rem;color:var(--vg-text-strong);line-height:1.45;">{{ $booking->cancellation_reason }}</p>
                                 </div>
                             @endif
+                            @if(($booking->cancellation_policy ?? null) === 'trainer_refund')
+                                <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);border-radius:10px;padding:10px;margin-bottom:12px;">
+                                    <p style="font-size:.68rem;color:#6ee7b7;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Refund</p>
+                                    <p style="font-size:.8rem;color:var(--vg-text-strong);line-height:1.45;">
+                                        ₹{{ number_format($booking->refund_amount ?? $booking->amount) }}
+                                        @if(($booking->refund_status ?? null) === 'processed')
+                                            refunded to trainee UPI{{ $booking->refund_upi_id ? ' (' . $booking->refund_upi_id . ')' : '' }}.
+                                        @elseif(($booking->refund_status ?? null) === 'pending_admin')
+                                            refund request sent to admin.
+                                        @else
+                                            refund status: {{ str_replace('_', ' ', $booking->refund_status ?? 'pending') }}.
+                                        @endif
+                                    </p>
+                                </div>
+                            @elseif(($booking->cancellation_policy ?? null) === 'trainee_no_refund')
+                                <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.18);border-radius:10px;padding:10px;margin-bottom:12px;">
+                                    <p style="font-size:.68rem;color:#fbbf24;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Refund</p>
+                                    <p style="font-size:.8rem;color:var(--vg-text-strong);line-height:1.45;">No refund applies because the trainee cancelled this session.</p>
+                                </div>
+                            @endif
                             @if(!$isTrainer && $partner)
                                 <a href="{{ route('book.trainer.create', $partner->id) }}" style="display:inline-block;font-size:.75rem;color:var(--vg-accent);font-weight:600;text-decoration:none;">Rebook Session →</a>
                             @endif
@@ -278,7 +302,7 @@
                 <h2 style="font-size:1rem;font-weight:700;color:var(--vg-text-strong);margin-bottom:1.5rem;">👨‍🏫 Trainer Tips</h2>
                 <ul style="list-style:none;padding:0;margin:0;font-size:.8rem;color:var(--vg-text-muted);display:flex;flex-direction:column;gap:12px;">
                     <li style="display:flex;gap:8px;"><span style="color:var(--vg-accent);">•</span> Keep your availability updated.</li>
-                    <li style="display:flex;gap:8px;"><span style="color:var(--vg-accent);">•</span> Join video sessions 5 mins early.</li>
+                    <li style="display:flex;gap:8px;"><span style="color:var(--vg-accent);">•</span> Join video sessions 10 mins early.</li>
                     <li style="display:flex;gap:8px;"><span style="color:var(--vg-accent);">•</span> Mark sessions as "Completed" right after finishing them.</li>
                 </ul>
             </div>

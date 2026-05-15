@@ -142,6 +142,16 @@
                           onfocus="this.style.borderColor='rgba(139,92,246,.6)'" onblur="this.style.borderColor='rgba(139,92,246,.25)'">{{ old('injuries', $user->injuries) }}</textarea>
             </div>
 
+            @if($user->role === 'trainee')
+            <div>
+                <label style="display:block;font-size:.73rem;font-weight:700;color:rgba(196,181,253,.65);letter-spacing:.04em;margin-bottom:6px;">UPI ID FOR REFUNDS</label>
+                <input type="text" name="upi_id" value="{{ old('upi_id', $user->upi_id) }}" placeholder="name@upi"
+                       style="width:100%;padding:11px 14px;background:rgba(255,255,255,.05);border:1px solid {{ $errors->has('upi_id') ? 'rgba(239,68,68,.5)' : 'rgba(139,92,246,.25)' }};border-radius:12px;color:#fff;font-size:.88rem;outline:none;"
+                       onfocus="this.style.borderColor='rgba(139,92,246,.6)'" onblur="this.style.borderColor='rgba(139,92,246,.25)'">
+                @error('upi_id')<p style="color:#f87171;font-size:.72rem;margin-top:3px;">{{ $message }}</p>@enderror
+            </div>
+            @endif
+
             {{-- Trainer-specific fields --}}
             @if($user->role === 'trainer')
             <div style="border-top:1px solid rgba(139,92,246,.12);padding-top:1.2rem;">

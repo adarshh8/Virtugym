@@ -173,21 +173,20 @@
             @if(isset($upcomingSessions) && $upcomingSessions->count() > 0)
                 <div style="display:flex;flex-direction:column;gap:.8rem;">
                     @foreach($upcomingSessions as $session)
+                        @php
+                            $sessionDate = \Carbon\Carbon::parse($session->session_date);
+                            $joinAt = $sessionDate->copy()->subMinutes(10);
+                            $canJoin = now()->greaterThanOrEqualTo($joinAt);
+                        @endphp
                         <div style="border-bottom:1px solid rgba(139,92,246,.1);padding-bottom:.8rem;position:relative;">
                             <p style="font-size:.88rem;font-weight:600;color:#e2d9f3;margin-bottom:2px;">{{ $session->trainer->specialization ?? 'Personal Training' }} with {{ $session->trainer->name ?? 'Trainer' }}</p>
-                            <p style="font-size:.75rem;color:rgba(255,255,255,.3);">{{ \Carbon\Carbon::parse($session->session_date)->format('M d, Y h:i A') }}</p>
+                            <p style="font-size:.75rem;color:rgba(255,255,255,.3);">{{ $sessionDate->format('M d, Y h:i A') }}</p>
                             <span style="font-size:.7rem;background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.25);padding:2px 8px;border-radius:50px;font-weight:600;display:inline-block;margin-top:4px;">{{ ucfirst($session->status) }}</span>
-                            @php
-                                $d = \Carbon\Carbon::parse($session->session_date);
-                                $now = now();
-                                if ($d->isFuture() && $d->diffInHours($now) < 24) {
-                                    $diff = $now->diff($d);
-                                    $countdown = $diff->h . 'h ' . $diff->i . 'm';
-                                    echo '<span style="font-size:.7rem;color:#fca5a5;font-weight:600;position:absolute;bottom:0.8rem;right:0;">Starts in '.$countdown.'</span>';
-                                } elseif ($d->isFuture()) {
-                                    echo '<span style="font-size:.7rem;color:#fca5a5;font-weight:600;position:absolute;bottom:0.8rem;right:0;">In '.$d->diffInDays($now).' days</span>';
-                                }
-                            @endphp
+                            @if($canJoin)
+                                <a href="{{ route('video-call.join', $session->id) }}" style="font-size:.7rem;color:#6ee7b7;font-weight:700;position:absolute;bottom:0.8rem;right:0;text-decoration:none;">Join Session</a>
+                            @else
+                                <span style="font-size:.7rem;color:#fca5a5;font-weight:600;position:absolute;bottom:0.8rem;right:0;">Opens {{ $joinAt->format('h:i A') }}</span>
+                            @endif
                         </div>
                     @endforeach
                 </div>

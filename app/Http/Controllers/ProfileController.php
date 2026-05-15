@@ -42,6 +42,7 @@ class ProfileController extends Controller
             'specialization'   => ['nullable', 'string', 'max:255'],
             'experience_years' => ['nullable', 'integer', 'min:0', 'max:50'],
             'hourly_rate'      => ['nullable', 'numeric', 'min:0'],
+            'upi_id'           => ['nullable', 'string', 'max:100'],
         ]);
 
         $user = $request->user();
@@ -49,6 +50,7 @@ class ProfileController extends Controller
             'name', 'email', 'age', 'gender', 'weight', 'height',
             'fitness_level', 'goal', 'workout_days', 'injuries',
             'bio', 'specialization', 'experience_years', 'hourly_rate',
+            'upi_id',
         ]));
         $user->equipment = $request->input('equipment', []);
         $user->save();

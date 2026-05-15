@@ -22,7 +22,7 @@ class User extends Authenticatable
         'bio', 'experience_years', 'specialization', 'hourly_rate', 
         'certifications', 'is_verified', 'rating', 'total_clients',
         // Payment fields
-        'razorpay_id', 'stripe_id',
+        'razorpay_id', 'stripe_id', 'upi_id',
         'activity_visit_dates'
     ];
     

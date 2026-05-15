@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\WithdrawalRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Razorpay\Api\Api;
 
 class AdminDashboardController extends Controller
 {
@@ -96,6 +97,79 @@ class AdminDashboardController extends Controller
     {
         $bookings = Booking::with(['trainee', 'trainer'])->orderBy('created_at', 'desc')->paginate(20);
         return view('admin.bookings', compact('bookings'));
+    }
+
+    public function processBookingRefund($id)
+    {
+        $booking = Booking::with(['trainee', 'trainer'])->findOrFail($id);
+
+        if (($booking->refund_status ?? null) !== 'pending_admin') {
+            return redirect()->back()->with('error', 'This booking does not have a pending admin refund request.');
+        }
+
+        $amount = (float) ($booking->refund_amount ?? $booking->amount ?? 0);
+        if ($amount <= 0) {
+            return redirect()->back()->with('error', 'Refund amount is missing for this booking.');
+        }
+
+        $upiId = $booking->refund_upi_id ?: ($booking->trainee->upi_id ?? null);
+        if ($upiId && $upiId !== $booking->refund_upi_id) {
+            $booking->refund_upi_id = $upiId;
+        }
+
+        $payment = Payment::where('booking_id', $booking->id)->first();
+        $refundReference = 'ADMIN-REFUND-' . strtoupper(substr(md5($booking->id . now()), 0, 10));
+
+        try {
+            if (config('services.razorpay.key') && config('services.razorpay.secret') && $booking->payment_id) {
+                $razorpay = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
+                $refund = $razorpay->payment
+                    ->fetch($booking->payment_id)
+                    ->refund(['amount' => (int) round($amount * 100)]);
+
+                $refundReference = $refund->id ?? $refundReference;
+            }
+
+            $booking->update([
+                'refund_status' => 'processed',
+                'refund_amount' => $amount,
+                'refund_upi_id' => $upiId,
+                'refund_reference' => $refundReference,
+                'refund_processed_at' => now(),
+                'refund_error' => null,
+            ]);
+
+            if ($payment) {
+                $payment->update([
+                    'status' => 'refunded',
+                    'refund_amount' => $amount,
+                    'refund_reference' => $refundReference,
+                    'refunded_at' => now(),
+                    'refund_error' => null,
+                ]);
+            }
+
+            $traineeName = $booking->trainee->name ?? 'the trainee';
+
+            return redirect()->back()->with('success', "Refund of ₹{$amount} processed for {$traineeName}.");
+        } catch (\Exception $e) {
+            \Log::error('Admin booking refund failed: ' . $e->getMessage(), [
+                'booking_id' => $booking->id,
+            ]);
+
+            $booking->update([
+                'refund_status' => 'failed',
+                'refund_error' => $e->getMessage(),
+            ]);
+
+            if ($payment) {
+                $payment->update([
+                    'refund_error' => $e->getMessage(),
+                ]);
+            }
+
+            return redirect()->back()->with('error', 'Refund failed: ' . $e->getMessage());
+        }
     }
     
     public function deleteBooking($id)

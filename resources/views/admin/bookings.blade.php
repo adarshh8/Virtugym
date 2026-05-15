@@ -5,6 +5,17 @@
 @section('content')
 <div class="max-w-6xl mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">📅 Manage Bookings</h1>
+
+    @if(session('success'))
+        <div class="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm font-semibold text-green-300">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300">
+            {{ session('error') }}
+        </div>
+    @endif
     
     <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-700 shadow-lg">
         <div class="px-6 py-4 border-b border-gray-700">
@@ -20,11 +31,15 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Duration</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Amount</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Refund</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-700">
                     @foreach($bookings as $booking)
+                    @php
+                        $refundUpiId = $booking->refund_upi_id ?: ($booking->trainee->upi_id ?? null);
+                    @endphp
                     <tr class="hover:bg-gray-700/30 transition">
                         <td class="px-6 py-3 font-medium text-gray-200">{{ $booking->trainee->name ?? 'N/A' }}</td>
                         <td class="px-6 py-3 text-gray-400">{{ $booking->trainer->name ?? 'N/A' }}</td>
@@ -39,6 +54,59 @@
                                 @else bg-gray-700 text-gray-300 @endif">
                             {{ ucfirst($booking->status ?? 'pending') }}
                         </span>
+                    </td>
+                    <td class="px-6 py-3 text-sm">
+                        @if(($booking->refund_status ?? null) === 'pending_admin')
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="inline-flex rounded-full bg-yellow-500/10 px-2 py-1 text-xs font-semibold text-yellow-300 ring-1 ring-yellow-500/30">Admin refund pending</span>
+                                </div>
+                                <div class="text-xs text-gray-400">
+                                    <div>Refund: <span class="font-semibold text-gray-200">₹{{ number_format($booking->refund_amount ?? $booking->amount ?? 0) }}</span></div>
+                                    <div>Trainee: {{ $booking->trainee->name ?? 'N/A' }}</div>
+                                    <div>Trainer: {{ $booking->trainer->name ?? 'N/A' }}</div>
+                                    @if($refundUpiId)
+                                        <div>UPI: <span class="font-semibold text-gray-200">{{ $refundUpiId }}</span></div>
+                                        @if(!$booking->refund_upi_id)
+                                            <div class="text-yellow-300">Using trainee profile UPI</div>
+                                        @endif
+                                    @else
+                                        <div class="text-red-300">UPI: Missing from trainee profile</div>
+                                    @endif
+                                    @if($booking->cancellation_reason)
+                                        <div>Reason: {{ $booking->cancellation_reason }}</div>
+                                    @endif
+                                    @if($booking->refund_error)
+                                        <div class="text-red-300">{{ $booking->refund_error }}</div>
+                                    @endif
+                                </div>
+                                <form method="POST" action="{{ route('admin.bookings.refund', $booking->id) }}" onsubmit="return confirm('Process refund for this trainee?')">
+                                    @csrf
+                                    <button type="submit" class="rounded-md bg-green-500/15 px-3 py-1.5 text-xs font-semibold text-green-300 ring-1 ring-green-500/30 transition hover:bg-green-500/25">Process Refund</button>
+                                </form>
+                            </div>
+                        @elseif(($booking->refund_status ?? null) === 'processed')
+                            <div class="text-xs text-green-300">
+                                Refunded ₹{{ number_format($booking->refund_amount ?? 0) }}
+                                @if($refundUpiId)
+                                    <div class="text-gray-400">UPI: {{ $refundUpiId }}</div>
+                                @endif
+                                @if($booking->refund_reference)
+                                    <div class="text-gray-400">Ref: {{ $booking->refund_reference }}</div>
+                                @endif
+                            </div>
+                        @elseif(($booking->refund_status ?? null) === 'failed')
+                            <div class="text-xs text-red-300">
+                                Refund failed
+                                @if($booking->refund_error)
+                                    <div class="text-gray-400">{{ $booking->refund_error }}</div>
+                                @endif
+                            </div>
+                        @elseif(($booking->cancellation_policy ?? null) === 'trainee_no_refund')
+                            <span class="text-xs text-gray-400">No refund</span>
+                        @else
+                            <span class="text-xs text-gray-500">-</span>
+                        @endif
                     </td>
                     <td class="px-6 py-3">
                         <form method="POST" action="{{ route('admin.bookings.delete', $booking->id) }}" onsubmit="return confirm('Delete this booking?')">

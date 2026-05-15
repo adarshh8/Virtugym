@@ -20,7 +20,10 @@ class TraineeDashboardController extends Controller
             'total_workouts' => Workout::where('user_id', $trainee->id)->count(),
             'completed_workouts' => Workout::where('user_id', $trainee->id)->whereNotNull('completed_at')->count(),
             'total_bookings' => Booking::where('trainee_id', $trainee->id)->count(),
-            'upcoming_sessions' => Booking::where('trainee_id', $trainee->id)->where('session_date', '>', now())->count(),
+            'upcoming_sessions' => Booking::where('trainee_id', $trainee->id)
+                ->where('status', 'confirmed')
+                ->where('session_date', '>=', now()->subHours(3))
+                ->count(),
         ];
         
         $recentWorkouts = Workout::where('user_id', $trainee->id)
@@ -29,7 +32,8 @@ class TraineeDashboardController extends Controller
             ->get();
             
         $upcomingSessions = Booking::where('trainee_id', $trainee->id)
-            ->where('session_date', '>', now())
+            ->where('status', 'confirmed')
+            ->where('session_date', '>=', now()->subHours(3))
             ->with('trainer')
             ->orderBy('session_date', 'asc')
             ->limit(5)

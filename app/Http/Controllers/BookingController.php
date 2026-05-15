@@ -380,11 +380,17 @@ class BookingController extends Controller
      */
     public function update(Request $request, $id)
     {
-        if (!Auth::check() || Auth::user()->role !== 'trainer') {
+        if (!Auth::check()) {
             abort(403);
         }
         
-        $booking = Booking::where('trainer_id', Auth::id())->findOrFail($id);
+        $booking = Booking::where(function($query) {
+            $query->where('trainer_id', Auth::id())
+                  ->orWhere('trainee_id', Auth::id());
+        })->findOrFail($id);
+
+        $isTrainer = Auth::id() == $booking->trainer_id;
+        $isTrainee = Auth::id() == $booking->trainee_id;
         
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:confirmed,completed,cancelled',
@@ -394,8 +400,21 @@ class BookingController extends Controller
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator);
         }
+
+        if ($booking->status === 'cancelled') {
+            return redirect()->back()->with('error', 'This booking is already cancelled.');
+        }
+
+        if ($request->status === 'completed' && !$isTrainer) {
+            abort(403, 'Only trainers can mark sessions as completed.');
+        }
+
+        if ($request->status === 'confirmed') {
+            abort(403, 'Bookings cannot be restored from this screen.');
+        }
         
         $updateData = ['status' => $request->status];
+        $message = 'Booking status updated!';
         
         if ($request->status == 'completed') {
             $updateData['completed_at'] = now();
@@ -403,10 +422,48 @@ class BookingController extends Controller
             $updateData['cancelled_at'] = now();
             $updateData['cancelled_by'] = Auth::id();
             $updateData['cancellation_reason'] = $request->cancellation_reason;
+            $updateData['cancellation_policy'] = $isTrainer ? 'trainer_refund' : 'trainee_no_refund';
+
+            if ($isTrainer) {
+                $refundData = $this->createTrainerCancellationRefundRequest($booking);
+                $updateData = array_merge($updateData, $refundData);
+                $message = 'Session cancelled. A refund request has been sent to admin for the trainee.';
+            } elseif ($isTrainee) {
+                $updateData['refund_status'] = 'not_applicable';
+                $updateData['refund_amount'] = 0;
+                $message = 'Session cancelled. Trainee cancellations are not eligible for a refund.';
+            }
         }
 
         $booking->update($updateData);
         
-        return redirect()->back()->with('success', 'Booking status updated!');
+        return redirect()->back()->with('success', $message);
+    }
+
+    private function createTrainerCancellationRefundRequest(Booking $booking): array
+    {
+        $booking->loadMissing('trainee');
+
+        $amount = (float) ($booking->amount ?? 0);
+        $upiId = $booking->trainee->upi_id ?? null;
+        $payment = Payment::where('booking_id', $booking->id)->first();
+
+        if ($payment) {
+            $payment->update([
+                'status' => 'refund_pending',
+                'refund_amount' => $amount,
+                'refund_error' => $upiId ? null : 'Trainee UPI ID is missing.',
+            ]);
+        }
+
+        return [
+            'refund_status' => 'pending_admin',
+            'refund_amount' => $amount,
+            'refund_upi_id' => $upiId,
+            'refund_requested_at' => now(),
+            'refund_processed_at' => null,
+            'refund_reference' => null,
+            'refund_error' => $upiId ? null : 'Trainee UPI ID is missing.',
+        ];
     }
 }

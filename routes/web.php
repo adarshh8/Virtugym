@@ -103,6 +103,7 @@ Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(functi
     Route::delete('/trainers/{id}/delete', [AdminDashboardController::class, 'deleteTrainer'])->name('trainers.delete');
     
     Route::get('/bookings', [AdminDashboardController::class, 'bookings'])->name('bookings');
+    Route::post('/bookings/{id}/refund', [AdminDashboardController::class, 'processBookingRefund'])->name('bookings.refund');
     Route::delete('/bookings/{id}/delete', [AdminDashboardController::class, 'deleteBooking'])->name('bookings.delete');
     
     Route::get('/withdrawals', [AdminDashboardController::class, 'withdrawals'])->name('withdrawals');

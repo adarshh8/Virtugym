@@ -16,15 +16,20 @@ class VideoCallController extends Controller
         if (Auth::id() != $booking->trainee_id && Auth::id() != $booking->trainer_id) {
             abort(403);
         }
+
+        if ($booking->status !== 'confirmed') {
+            return redirect()->route('bookings.index')->with('error', 'Only confirmed sessions can be joined.');
+        }
         
-        // Check if session time has arrived (15 minutes before allowed)
+        // Check if session time has arrived (10 minutes before allowed)
         $sessionTime = strtotime($booking->session_date);
         $now = time();
-        $canJoin = ($now >= $sessionTime - 900); // 15 minutes before
+        $joinOpensAt = $sessionTime - 600;
+        $canJoin = ($now >= $joinOpensAt);
         
         if (!$canJoin) {
-            $waitMinutes = ceil(($sessionTime - 900 - $now) / 60);
-            return redirect()->back()->with('error', "Video session will be available {$waitMinutes} minutes before the scheduled time.");
+            $waitMinutes = ceil(($joinOpensAt - $now) / 60);
+            return redirect()->back()->with('error', "Video session opens 10 minutes before the scheduled time. Please try again in {$waitMinutes} minutes.");
         }
         
         // Generate Jitsi meeting link
