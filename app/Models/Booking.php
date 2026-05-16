@@ -16,7 +16,8 @@ class Booking extends Model
         'cancelled_by', 'cancellation_reason',
         'cancellation_policy', 'refund_status', 'refund_amount',
         'refund_reference', 'refund_requested_at', 'refund_processed_at', 'refund_error',
-        'refund_upi_id', 'meeting_id', 'meeting_link', 'meeting_started', 'meeting_ended'
+        'refund_upi_id', 'meeting_id', 'meeting_link', 'meeting_started', 'meeting_ended',
+        'session_type', 'trainer_notes'
     ];
     
     protected $casts = [
