@@ -14,14 +14,17 @@ class WorkoutController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $exercises = Exercise::orderBy('name')->get();
+        $nextWorkoutId = null;
+        $clients = collect();
         
         if ($user->role === 'trainer') {
-            // Trainer sees workouts they created
+            // Trainer sees all workouts they've created/assigned
             $workouts = Workout::where('trainer_id', $user->id)
+                ->with('trainee')
                 ->orderBy('created_at', 'desc')
-                ->paginate(10);
+                ->paginate(12);
             
-            // Get trainer's clients
             $clients = Booking::where('trainer_id', $user->id)
                 ->whereIn('status', ['confirmed', 'completed'])
                 ->with('trainee')
@@ -29,25 +32,28 @@ class WorkoutController extends Controller
                 ->pluck('trainee')
                 ->filter()
                 ->unique('id');
+                
+            return view('workouts.index', compact('workouts', 'exercises', 'clients'));
         } else {
-            // Trainee sees workouts assigned to them
-            $workouts = Workout::where('trainee_id', $user->id)
-                ->orWhere('user_id', $user->id)
+            // Trainee sees workouts assigned to them vs created by them
+            $assignedWorkouts = Workout::where('trainee_id', $user->id)
+                ->whereNotNull('assigned_by')
                 ->orderBy('created_at', 'desc')
-                ->paginate(10);
+                ->get();
             
-            $clients = collect();
+            $customWorkouts = Workout::where('user_id', $user->id)
+                ->whereNull('assigned_by')
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            // Get next workout for "Continue Plan" button (only for trainees)
+            $nextWorkout = Workout::where('user_id', $user->id)
+                ->whereNull('completed_at')
+                ->orderBy('scheduled_date', 'asc')
+                ->first();
+            
+            return view('workouts.index', compact('assignedWorkouts', 'customWorkouts', 'exercises', 'nextWorkout'));
         }
-
-        $exercises = Exercise::orderBy('name')->get();
-        
-        // Get next workout for "Continue Plan" button
-        $nextWorkoutId = Workout::where('user_id', $user->id)
-            ->whereNull('completed_at')
-            ->orderBy('scheduled_date', 'asc')
-            ->first()?->id;
-        
-        return view('workouts.index', compact('workouts', 'exercises', 'clients', 'nextWorkoutId'));
     }
     
     public function create()

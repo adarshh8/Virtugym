@@ -135,6 +135,7 @@
         </div>
     </div>
 
+    @if(auth()->user()->role == 'trainee')
     <div class="ai-card fade-in-up delay-4">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
             <i data-lucide="bot" style="color:var(--accent);font-size:20px"></i>
@@ -149,6 +150,7 @@
             <button class="ai-btn" onclick="askCoach()"><i data-lucide="send"></i>Ask</button>
         </div>
     </div>
+    @endif
 </div>
 
 <script>
