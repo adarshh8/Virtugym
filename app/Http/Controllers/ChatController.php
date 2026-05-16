@@ -28,11 +28,22 @@ class ChatController extends Controller
             });
         
         $selectedTrainer = null;
+        $nextSession = null;
         if ($trainer_id) {
             $selectedTrainer = User::find($trainer_id);
+            
+            // Get next session info
+            $nextSession = Booking::where(function($q) use ($user, $trainer_id) {
+                    $q->where('trainee_id', $user->id)->where('trainer_id', $trainer_id);
+                })
+                ->where('session_date', '>=', now()->toDateString())
+                ->where('status', 'confirmed')
+                ->orderBy('session_date', 'asc')
+                ->orderBy('session_time', 'asc')
+                ->first();
         }
         
-        return view('chat.index', compact('conversations', 'selectedTrainer'));
+        return view('chat.index', compact('conversations', 'selectedTrainer', 'nextSession'));
     }
     
     public function getMessages($trainer_id)
