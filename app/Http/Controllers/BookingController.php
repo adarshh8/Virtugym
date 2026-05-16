@@ -75,8 +75,8 @@ class BookingController extends Controller
             ->withInput();
     }
     
-    $trainer = User::findOrFail($trainer_id);
-    $amount = ($trainer->hourly_rate ?? 500) * ($request->duration / 60);
+    $trainer = User::where('role', 'trainer')->findOrFail($trainer_id);
+    $amount = round((float) ($trainer->hourly_rate ?: 500) * ((int) $request->duration / 60), 2);
     
     // ===== AVAILABILITY CHECK (MongoDB Compatible) =====
     $dayOfWeek = date('w', strtotime($request->session_date));
@@ -142,7 +142,7 @@ class BookingController extends Controller
         // Create Razorpay Order
         $orderData = [
             'receipt'         => 'rcptid_' . time(),
-            'amount'          => $amount * 100, // Amount in paise
+            'amount'          => (int) round($amount * 100), // Amount in paise
             'currency'        => 'INR',
             'payment_capture' => 1 // auto capture
         ];

@@ -3,6 +3,7 @@
 @section('title', 'Book a Trainer')
 
 @section('content')
+@php($hourlyRate = (float) ($trainer->hourly_rate ?: 500))
 <div class="max-w-2xl mx-auto px-4 py-8">
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
         <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
@@ -41,10 +42,10 @@
             <div class="mb-4">
                 <label class="block text-gray-700 font-semibold mb-2">Duration (minutes)</label>
                 <select name="duration" id="duration" class="w-full px-4 py-2 border rounded-lg" required>
-                    <option value="30">30 minutes - ₹{{ ($trainer->hourly_rate ?? 500) / 2 }}</option>
-                    <option value="60" selected>60 minutes - ₹{{ $trainer->hourly_rate ?? 500 }}</option>
-                    <option value="90">90 minutes - ₹{{ ($trainer->hourly_rate ?? 500) * 1.5 }}</option>
-                    <option value="120">120 minutes - ₹{{ ($trainer->hourly_rate ?? 500) * 2 }}</option>
+                    <option value="30">30 minutes - Rs {{ number_format($hourlyRate / 2, 2) }}</option>
+                    <option value="60" selected>60 minutes - Rs {{ number_format($hourlyRate, 2) }}</option>
+                    <option value="90">90 minutes - Rs {{ number_format($hourlyRate * 1.5, 2) }}</option>
+                    <option value="120">120 minutes - Rs {{ number_format($hourlyRate * 2, 2) }}</option>
                 </select>
             </div>
             
@@ -55,9 +56,9 @@
             </div>
             
             <!-- Amount -->
-            <div class="bg-purple-50 rounded-lg p-4 mb-6 text-center">
-                <span class="font-semibold">Total Amount:</span>
-                <span class="text-2xl font-bold text-purple-600" id="amountDisplay">₹{{ $trainer->hourly_rate ?? 500 }}</span>
+            <div class="rounded-lg p-4 mb-6 text-center" style="background:var(--vg-accent-soft);border:1px solid var(--vg-border-strong);">
+                <span class="font-semibold" style="color:var(--vg-text-strong);">Total Amount:</span>
+                <span class="text-2xl font-bold" style="color:var(--vg-text-strong);" id="amountDisplay">Rs {{ number_format($hourlyRate, 2) }}</span>
             </div>
             
             <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold">
@@ -69,9 +70,26 @@
 
 <script>
     const trainerId = '{{ $trainer->id }}';
-    const hourlyRate = {{ $trainer->hourly_rate ?? 500 }};
+    const hourlyRate = Number({{ json_encode($hourlyRate) }});
     const dateInput = document.getElementById('session_date');
     const timeSelect = document.getElementById('session_time');
+    const durationSelect = document.getElementById('duration');
+    const amountDisplay = document.getElementById('amountDisplay');
+
+    function formatAmount(amount) {
+        return 'Rs ' + Number(amount).toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function updateAmount() {
+        const duration = Number(durationSelect.value || 60);
+        amountDisplay.textContent = formatAmount(hourlyRate * (duration / 60));
+    }
+
+    durationSelect.addEventListener('change', updateAmount);
+    updateAmount();
     
     dateInput.addEventListener('change', function() {
         const date = this.value;
