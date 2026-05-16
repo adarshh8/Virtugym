@@ -11,8 +11,8 @@ class ProgressMetric extends Model
     
     protected $fillable = [
         'user_id', 'date', 'weight', 'body_fat_percentage',
-        'chest', 'waist', 'hips', 'biceps', 'thighs',
-        'muscle_mass', 'bmr', 'bmi', 'notes'
+        'chest', 'waist', 'hips', 'biceps', 'thighs', 'arms',
+        'muscle_mass', 'bmr', 'bmi', 'notes', 'progress_photo'
     ];
     
     protected $casts = [
@@ -24,6 +24,7 @@ class ProgressMetric extends Model
         'hips' => 'float',
         'biceps' => 'float',
         'thighs' => 'float',
+        'arms' => 'float',
         'muscle_mass' => 'float',
         'bmr' => 'float',
         'bmi' => 'float'
