@@ -626,23 +626,31 @@
                 <a href="{{ route('dashboard') }}" class="sidebar-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="chart-no-axes-combined"></i></span><span>Dashboard</span>
                 </a>
+                @if(Auth::user()->role == 'trainee')
                 <a href="{{ route('analytics.index') }}" class="sidebar-item {{ request()->routeIs('analytics.*') ? 'active' : '' }}">
-                    <span class="s-icon"><i data-lucide="trending-up"></i></span><span>Analytics</span>
+                    <span class="s-icon"><i data-lucide="trending-up"></i></span>
+                    <span>Analytics</span>
                 </a>
+                @endif
                 <a href="{{ route('workouts.index') }}" class="sidebar-item {{ request()->routeIs('workouts.*') ? 'active' : '' }}">
-                    <span class="s-icon"><i data-lucide="dumbbell"></i></span><span>Workouts</span>
+                    <span class="s-icon"><i data-lucide="dumbbell"></i></span>
+                    <span>{{ Auth::user()->role == 'trainer' ? 'Client Workouts' : 'Workouts' }}</span>
                 </a>
                 <a href="{{ route('exercises.index') }}" class="sidebar-item {{ request()->routeIs('exercises.*') ? 'active' : '' }}">
-                    <span class="s-icon"><i data-lucide="activity"></i></span><span>Exercises</span>
+                    <span class="s-icon"><i data-lucide="activity"></i></span>
+                    <span>{{ Auth::user()->role == 'trainer' ? 'Exercise Library' : 'Exercises' }}</span>
                 </a>
+                @if(Auth::user()->role == 'trainee')
                 <a href="{{ route('progress.index') }}" class="sidebar-item {{ request()->routeIs('progress.*') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="target"></i></span><span>Progress</span>
                 </a>
+                @endif
                 <a href="{{ route('chat.index') }}" class="sidebar-item {{ request()->routeIs('chat.*') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="message-circle"></i></span><span>Messages</span>
                     <span id="unreadBadge" class="hidden" style="margin-left:auto;"></span>
                 </a>
 
+                @if(Auth::user()->role == 'trainee')
                 <!-- AI COACH SIDEBAR LINK -->
                 <a href="{{ route('ai.dashboard') }}" class="sidebar-item {{ request()->routeIs('ai.*') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="bot"></i></span>
@@ -650,8 +658,10 @@
                 </a>
 
                 <a href="{{ route('music.index') }}" class="sidebar-item {{ request()->routeIs('music.*') ? 'active' : '' }}">
-                    <span class="s-icon"><i data-lucide="music"></i></span><span>Workout Music</span>
+                    <span class="s-icon"><i data-lucide="music"></i></span>
+                    <span>Workout Music</span>
                 </a>
+                @endif
 
                 @if(Auth::user()->role == 'trainer')
                 <a href="{{ route('trainer.availability.index') }}" class="sidebar-item {{ request()->routeIs('trainer.availability.*') ? 'active' : '' }}">
@@ -855,5 +865,7 @@
     })();
     @endif
     </script>
+    @stack('modals')
+    @stack('scripts')
 </body>
 </html>

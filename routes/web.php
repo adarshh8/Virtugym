@@ -59,6 +59,8 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
 
     // Exercises
     Route::resource('exercises', ExerciseController::class);
+    Route::post('/exercises/add-to-workout', [ExerciseController::class, 'addToWorkout'])->name('exercises.add-to-workout');
+    Route::get('/exercises/user-workouts/{user_id}', [ExerciseController::class, 'getUserWorkouts'])->name('exercises.user-workouts');
 
     // Progress
     Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
@@ -115,6 +117,7 @@ Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(functi
     Route::prefix('trainer')->name('trainer.')->middleware(['role:trainer'])->group(function () {
         Route::get('/dashboard', [TrainerDashboardController::class, 'index'])->name('dashboard');
         Route::get('/clients', [TrainerDashboardController::class, 'clients'])->name('clients');
+        Route::get('/clients-api', [TrainerDashboardController::class, 'clientsApi'])->name('clients-api');
         Route::get('/schedule', [TrainerDashboardController::class, 'schedule'])->name('schedule');
         Route::post('/profile/update', [TrainerDashboardController::class, 'updateProfile'])->name('profile.update');
         
