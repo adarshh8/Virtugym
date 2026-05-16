@@ -162,6 +162,28 @@
                 @endif
             </div>
 
+            {{-- Recent Clients --}}
+            <div class="fade-in-up delay-3" style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,0.06);border-radius:28px;padding:2rem;">
+                <h2 style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:1.2rem;">Recent Clients</h2>
+                @if(count($recentClients) > 0)
+                    <div style="display:flex;flex-direction:column;gap:1rem;">
+                        @foreach($recentClients as $booking)
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,0.1);">
+                                    {{ substr($booking->trainee->name ?? 'T', 0, 1) }}
+                                </div>
+                                <div>
+                                    <p style="font-size:.9rem;font-weight:600;color:#fff;">{{ $booking->trainee->name ?? 'Trainee' }}</p>
+                                    <p style="font-size:.7rem;color:rgba(255,255,255,0.3);">Last session: {{ \Carbon\Carbon::parse($booking->session_date)->format('M d') }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <p style="color:rgba(255,255,255,0.3);font-size:.85rem;">No clients yet</p>
+                @endif
+            </div>
+
         </div>
 
         {{-- Right Column --}}
@@ -184,27 +206,23 @@
                         <p style="font-size:.65rem;color:rgba(255,255,255,0.3);margin-top:4px;">per client</p>
                     </div>
                 </div>
-            </div>
-
-            {{-- Recent Clients --}}
-            <div class="fade-in-up delay-3" style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,0.06);border-radius:28px;padding:2rem;">
-                <h2 style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:1.2rem;">Recent Clients</h2>
-                @if(count($recentClients) > 0)
-                    <div style="display:flex;flex-direction:column;gap:1rem;">
-                        @foreach($recentClients as $booking)
-                            <div style="display:flex;align-items:center;gap:12px;">
-                                <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,0.1);">
-                                    {{ substr($booking->trainee->name ?? 'T', 0, 1) }}
-                                </div>
+               {{-- Recent Earnings --}}
+            <div class="fade-in-up delay-4" style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,0.06);border-radius:28px;padding:2rem;">
+                <h2 style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:1.2rem;">Recent Earnings</h2>
+                @if(count($recentEarnings) > 0)
+                    <div style="display:flex;flex-direction:column;gap:.8rem;">
+                        @foreach($recentEarnings as $earning)
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
                                 <div>
-                                    <p style="font-size:.9rem;font-weight:600;color:#fff;">{{ $booking->trainee->name ?? 'Trainee' }}</p>
-                                    <p style="font-size:.7rem;color:rgba(255,255,255,0.3);">Last session: {{ \Carbon\Carbon::parse($booking->session_date)->format('M d') }}</p>
+                                    <p style="font-size:.85rem;font-weight:600;color:#fff;">{{ $earning->trainee->name ?? 'Session' }}</p>
+                                    <p style="font-size:.65rem;color:rgba(255,255,255,0.3);">{{ \Carbon\Carbon::parse($earning->completed_at)->format('M d, Y') }}</p>
                                 </div>
+                                <span style="font-weight:700;color:#10b981;">+₹{{ number_format($earning->amount) }}</span>
                             </div>
                         @endforeach
                     </div>
                 @else
-                    <p style="color:rgba(255,255,255,0.3);font-size:.85rem;">No clients yet</p>
+                    <p style="color:rgba(255,255,255,0.3);font-size:.85rem;">No earnings recorded</p>
                 @endif
             </div>
 
@@ -232,26 +250,8 @@
                     <p style="color:rgba(255,255,255,0.3);font-size:.85rem;">No workouts assigned</p>
                 @endif
             </div>
+        </div>
 
-            {{-- Recent Earnings --}}
-            <div class="fade-in-up delay-4" style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,0.06);border-radius:28px;padding:2rem;">
-                <h2 style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:1.2rem;">Recent Earnings</h2>
-                @if(count($recentEarnings) > 0)
-                    <div style="display:flex;flex-direction:column;gap:.8rem;">
-                        @foreach($recentEarnings as $earning)
-                            <div style="display:flex;justify-content:space-between;align-items:center;">
-                                <div>
-                                    <p style="font-size:.85rem;font-weight:600;color:#fff;">{{ $earning->trainee->name ?? 'Session' }}</p>
-                                    <p style="font-size:.65rem;color:rgba(255,255,255,0.3);">{{ \Carbon\Carbon::parse($earning->completed_at)->format('M d, Y') }}</p>
-                                </div>
-                                <span style="font-weight:700;color:#10b981;">+₹{{ number_format($earning->amount) }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <p style="color:rgba(255,255,255,0.3);font-size:.85rem;">No earnings recorded</p>
-                @endif
-            </div>
 
         </div>
     </div>
