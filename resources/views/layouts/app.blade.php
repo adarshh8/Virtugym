@@ -547,20 +547,33 @@
                 </div>
                 <div>
                     <div class="brand-name">VIRTU GYM</div>
-                    <div class="brand-sub">VIRTUAL TRAINER</div>
+                    <div class="brand-sub">{{ ucwords(strtolower(Auth::user()->name ?? 'Virtual Trainer')) }}</div>
                 </div>
             </a>
 
-            <div style="display:flex;align-items:center;gap:1rem;">
+            <!-- Search Bar (Optional) -->
+            <div class="hidden md:flex items-center bg-gray-800/50 border border-gray-700 rounded-full px-4 py-1.5 ml-8 mr-auto max-w-sm w-full">
+                <i data-lucide="search" class="w-4 h-4 text-gray-400 mr-2"></i>
+                <input type="text" placeholder="Search clients, bookings..." class="bg-transparent border-none text-sm text-white placeholder-gray-500 w-full focus:outline-none">
+            </div>
+
+            <div style="display:flex;align-items:center;gap:1.2rem;">
+                
+                <!-- Notification Bell -->
+                <button class="relative text-gray-400 hover:text-white transition focus:outline-none flex items-center justify-center">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-gray-900">3</span>
+                </button>
+
                 <!-- User info -->
-                <div class="nav-user-info hidden sm:block text-right">
-                    <p class="nav-user-name">{{ Auth::user()->name ?? 'User' }}</p>
+                <div class="nav-user-info hidden lg:block text-right border-l border-gray-700/50 pl-4">
+                    <p class="nav-user-name">{{ ucwords(strtolower(Auth::user()->name ?? 'User')) }}</p>
                     <p class="nav-user-email">{{ Auth::user()->email ?? '' }}</p>
                 </div>
 
                 <!-- Avatar + dropdown -->
                 <div class="relative" id="userDropdown">
-                    <button onclick="toggleDropdown()" class="focus:outline-none">
+                    <button onclick="toggleDropdown()" class="focus:outline-none flex items-center">
                         <div class="user-avatar">{{ substr(Auth::user()->name ?? 'U', 0, 1) }}</div>
                     </button>
                     <div id="dropdownMenu" class="dropdown-menu absolute right-0 mt-3 py-2 z-50 hidden">
@@ -575,12 +588,12 @@
                             <button type="button" class="theme-choice" data-theme-choice="forest" title="Forest theme" aria-label="Forest theme"></button>
                             <button type="button" class="theme-choice" data-theme-choice="graphite" title="Graphite theme" aria-label="Graphite theme"></button>
                         </div>
-                        <a href="{{ route('dashboard') }}" style="padding:9px 16px;color:var(--vg-text-muted);font-size:.83rem;"><i data-lucide="chart-no-axes-combined" class="vg-inline-icon"></i>Dashboard</a>
-                        <a href="{{ route('profile.edit') }}" style="padding:9px 16px;color:var(--vg-text-muted);font-size:.83rem;"><i data-lucide="settings" class="vg-inline-icon"></i>Edit Profile</a>
+                        <a href="{{ route('profile.edit') }}" style="padding:9px 16px;color:var(--vg-text-muted);font-size:.83rem;"><i data-lucide="user" class="vg-inline-icon"></i>Profile</a>
+                        <a href="#" style="padding:9px 16px;color:var(--vg-text-muted);font-size:.83rem;"><i data-lucide="settings" class="vg-inline-icon"></i>Settings</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" style="padding:9px 16px;color:#f87171;font-size:.83rem;text-align:left;background:none;border:none;cursor:pointer;width:100%;">
-                                <i data-lucide="log-out" class="vg-inline-icon"></i>Sign Out
+                                <i data-lucide="log-out" class="vg-inline-icon"></i>Logout
                             </button>
                         </form>
                     </div>
@@ -864,6 +877,12 @@
         });
     })();
     @endif
+    
+    // Smooth Page Exit
+    window.addEventListener('beforeunload', () => {
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 0.25s ease';
+    });
     </script>
     @stack('modals')
     @stack('scripts')
