@@ -38,6 +38,8 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
     
     // Bookings
     Route::resource('bookings', BookingController::class)->only(['index', 'update']);
+    Route::post('/bookings/bulk-complete', [BookingController::class, 'bulkComplete'])->name('bookings.bulk-complete');
+    Route::post('/bookings/{id}/notes', [BookingController::class, 'saveNotes'])->name('bookings.save-notes');
     Route::get('/book-trainer/{id}', [BookingController::class, 'create'])->name('book.trainer.create');
     Route::post('/initiate-payment/{trainer_id}', [BookingController::class, 'initiatePayment'])->name('initiate.payment');
     Route::post('/payment-success', [BookingController::class, 'paymentSuccess'])->name('payment.success');
