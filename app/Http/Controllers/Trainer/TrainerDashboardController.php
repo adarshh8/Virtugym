@@ -183,28 +183,42 @@ class TrainerDashboardController extends Controller
         return redirect()->back()->with('success', 'Profile updated successfully!');
     }
     public function withdrawalRequests()
-{
-    $requests = WithdrawalRequest::where('trainer_id', Auth::id())
-        ->orderBy('created_at', 'desc')
-        ->get();
-    
-    $totalEarnings = Booking::where('trainer_id', Auth::id())
-        ->whereIn('status', ['confirmed', 'completed'])
-        ->sum('amount');
-    
-    $totalWithdrawn = WithdrawalRequest::where('trainer_id', Auth::id())
-        ->where('status', 'completed')
-        ->get()
-        ->sum('amount');
+    {
+        $requests = WithdrawalRequest::where('trainer_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->get();
         
-    $hasPending = WithdrawalRequest::where('trainer_id', Auth::id())
-        ->where('status', 'pending')
-        ->exists();
-    
-    $availableBalance = $totalEarnings - $totalWithdrawn;
-    
-    return view('trainer.withdrawals', compact('requests', 'totalEarnings', 'totalWithdrawn', 'availableBalance', 'hasPending'));
-}
+        $totalEarnings = Booking::where('trainer_id', Auth::id())
+            ->whereIn('status', ['confirmed', 'completed'])
+            ->sum('amount');
+            
+        $monthlyEarnings = Booking::where('trainer_id', Auth::id())
+            ->whereBetween('session_date', [now()->startOfMonth(), now()->endOfMonth()])
+            ->whereIn('status', ['confirmed', 'completed'])
+            ->sum('amount');
+        
+        $totalWithdrawn = WithdrawalRequest::where('trainer_id', Auth::id())
+            ->where('status', 'completed')
+            ->get()
+            ->sum('amount');
+            
+        $pendingAmount = WithdrawalRequest::where('trainer_id', Auth::id())
+            ->where('status', 'pending')
+            ->sum('amount');
+            
+        $hasPending = WithdrawalRequest::where('trainer_id', Auth::id())
+            ->where('status', 'pending')
+            ->exists();
+            
+        $savedUpis = WithdrawalRequest::where('trainer_id', Auth::id())
+            ->whereNotNull('upi_id')
+            ->distinct('upi_id')
+            ->pluck('upi_id');
+        
+        $availableBalance = $totalEarnings - $totalWithdrawn;
+        
+        return view('trainer.withdrawals', compact('requests', 'totalEarnings', 'monthlyEarnings', 'totalWithdrawn', 'pendingAmount', 'availableBalance', 'hasPending', 'savedUpis'));
+    }
 
 public function requestWithdrawal(Request $request)
 {
