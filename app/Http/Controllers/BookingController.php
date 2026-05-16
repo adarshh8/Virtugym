@@ -372,6 +372,7 @@ class BookingController extends Controller
         $totalSessionsCompleted = 0;
         $trainerStats = [];
         $uniqueTrainees = collect();
+        $todaysSchedule = null;
 
         if (!$isTrainer) {
             $totalSpentThisMonth = Booking::where('trainee_id', $userId)
@@ -428,7 +429,7 @@ class BookingController extends Controller
         return view('bookings.index', compact(
             'upcomingBookings', 'pastBookings', 'cancelledBookings',
             'totalSpentThisMonth', 'totalSessionsCompleted', 'isTrainer',
-            'trainerStats', 'uniqueTrainees', 'todaysSchedule' ?? null
+            'trainerStats', 'uniqueTrainees', 'todaysSchedule'
         ));
     }
     

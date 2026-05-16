@@ -4,28 +4,41 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-8">
-    <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-400 to-purple-200 bg-clip-text text-transparent">
             🤖 AI Fitness Coach
         </h1>
         <p class="text-gray-400 mt-2">Your personal AI-powered fitness assistant</p>
-        @if(!$aiAvailable)
-            <div class="bg-yellow-900/50 border-l-4 border-yellow-500 p-4 mt-4 rounded-lg">
-                <p class="text-yellow-300">⚠️ AI features are running in offline mode. Add Gemini API key to enable full AI capabilities.</p>
-            </div>
-        @endif
     </div>
     
     <!-- AI Chat Section -->
-    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden mb-8 border border-gray-700">
-        <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-4 text-white">
-            <h2 class="font-bold text-lg">💬 Chat with VirtuCoach</h2>
-            <p class="text-sm opacity-90">Ask me anything about fitness, workouts, or nutrition!</p>
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden mb-8 border border-gray-700 relative">
+        <div class="bg-gray-800/80 p-4 border-b border-purple-500/20 flex justify-between items-center">
+            <div>
+                <h2 class="font-bold text-lg text-purple-100 flex items-center gap-2"><i data-lucide="bot" class="w-5 h-5 text-purple-400"></i> Chat with VirtuCoach</h2>
+                <p class="text-sm text-gray-400">Ask me anything about fitness, workouts, or nutrition!</p>
+            </div>
+            <button class="text-gray-400 hover:text-white flex items-center gap-1.5 text-sm bg-gray-700/50 px-3 py-1.5 rounded-lg border border-gray-600 transition" onclick="toggleChatHistory()">
+                <i data-lucide="history" class="w-4 h-4"></i> <span class="hidden sm:inline">History</span>
+            </button>
         </div>
         
-        <div id="chatMessages" class="h-96 overflow-y-auto p-4 space-y-3 bg-gray-900/50">
+        <!-- History Panel -->
+        <div id="historyPanel" class="absolute inset-y-0 right-0 w-64 bg-gray-900/95 border-l border-gray-700 transform translate-x-full transition-transform z-20 flex flex-col backdrop-blur-md">
+            <div class="p-3 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-white text-sm">Recent Chats</h3>
+                <button onclick="toggleChatHistory()" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-2 space-y-1">
+                <button class="w-full text-left p-2 hover:bg-gray-700 rounded text-sm text-gray-300 transition truncate"><i data-lucide="message-square" class="w-3 h-3 inline mr-1 text-purple-400"></i> Yesterday: Workout plan...</button>
+                <button class="w-full text-left p-2 hover:bg-gray-700 rounded text-sm text-gray-300 transition truncate"><i data-lucide="message-square" class="w-3 h-3 inline mr-1 text-purple-400"></i> May 14: Macros for bulk...</button>
+                <button class="w-full text-left p-2 hover:bg-gray-700 rounded text-sm text-gray-300 transition truncate"><i data-lucide="message-square" class="w-3 h-3 inline mr-1 text-purple-400"></i> May 10: Lower back pain...</button>
+            </div>
+        </div>
+        
+        <div id="chatMessages" class="h-96 overflow-y-auto p-4 space-y-3 bg-gray-900/40 relative z-10">
             <div class="flex justify-start">
-                <div class="bg-gray-700 rounded-2xl p-3 max-w-[80%]">
+                <div class="bg-gray-700 rounded-2xl p-3 max-w-[80%] border border-gray-600/50 shadow-lg shadow-black/20">
                     <p class="text-sm text-gray-200">👋 Hi! I'm VirtuCoach, your AI fitness trainer. Ask me about:</p>
                     <ul class="text-sm mt-1 ml-4 text-gray-300">
                         <li>💪 Personalized workouts</li>
@@ -37,12 +50,25 @@
             </div>
         </div>
         
-        <div class="p-4 border-t border-gray-700 bg-gray-800/30">
+        <!-- Quick Prompts -->
+        <div class="px-4 pb-2 bg-gray-800/30 pt-3 flex gap-2 overflow-x-auto relative z-10" id="quickPrompts" style="scrollbar-width: none;">
+            <button class="whitespace-nowrap px-3 py-1.5 bg-gray-700/80 hover:bg-purple-600 border border-gray-600 rounded-full text-xs text-gray-200 transition" onclick="setPrompt('Create a workout plan')">✨ Create a workout plan</button>
+            <button class="whitespace-nowrap px-3 py-1.5 bg-gray-700/80 hover:bg-purple-600 border border-gray-600 rounded-full text-xs text-gray-200 transition" onclick="setPrompt('What should I eat today?')">🥗 What should I eat today?</button>
+            <button class="whitespace-nowrap px-3 py-1.5 bg-gray-700/80 hover:bg-purple-600 border border-gray-600 rounded-full text-xs text-gray-200 transition" onclick="setPrompt('Analyze my progress')">📈 Analyze my progress</button>
+        </div>
+        
+        <div class="p-4 border-t border-gray-700 bg-gray-800/50 relative z-10">
             <div class="flex space-x-2">
-                <input type="text" id="chatInput" placeholder="Ask your fitness question..." 
-                       class="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
-                <button id="sendChat" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-xl hover:shadow-lg transition">
-                    Send
+                <div class="relative flex-1">
+                    <input type="text" id="chatInput" placeholder="Ask your fitness question..." 
+                           class="w-full pl-4 pr-10 py-3 bg-gray-900 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition shadow-inner">
+                    <button id="voiceInput" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-purple-400 transition" title="Voice Input">
+                        <i data-lucide="mic" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <button id="sendChat" class="bg-purple-600 text-white px-5 py-3 rounded-xl hover:bg-purple-500 transition flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <span class="hidden sm:inline mr-1">Send</span>
+                    <i data-lucide="send" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
@@ -100,7 +126,7 @@
                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500">
                 <textarea id="formDescription" rows="2" placeholder="Describe how you perform the exercise..." 
                           class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500"></textarea>
-                <button onclick="analyzeForm()" class="w-full bg-yellow-600 text-white py-2 rounded-lg text-sm hover:bg-yellow-700 transition">
+                <button onclick="analyzeForm()" class="w-full bg-purple-600 text-white py-2 rounded-lg text-sm hover:bg-purple-500 transition shadow-lg shadow-purple-500/20">
                     Analyze My Form
                 </button>
             </div>
@@ -122,7 +148,7 @@
                 </select>
                 <input type="number" id="planDuration" placeholder="Duration (minutes)" value="30" 
                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-orange-500">
-                <button onclick="generateCustomPlan()" class="w-full bg-orange-600 text-white py-2 rounded-lg text-sm hover:bg-orange-700 transition">
+                <button onclick="generateCustomPlan()" class="w-full bg-purple-600 text-white py-2 rounded-lg text-sm hover:bg-purple-500 transition shadow-lg shadow-purple-500/20">
                     Generate Plan
                 </button>
             </div>
@@ -151,6 +177,20 @@
     const chatInput = document.getElementById('chatInput');
     const sendButton = document.getElementById('sendChat');
     const chatMessages = document.getElementById('chatMessages');
+    
+    function setPrompt(text) {
+        chatInput.value = text;
+        chatInput.focus();
+    }
+    
+    function toggleChatHistory() {
+        const panel = document.getElementById('historyPanel');
+        if (panel.classList.contains('translate-x-full')) {
+            panel.classList.remove('translate-x-full');
+        } else {
+            panel.classList.add('translate-x-full');
+        }
+    }
     
     function addMessage(message, isUser = false) {
         const div = document.createElement('div');
