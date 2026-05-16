@@ -29,23 +29,48 @@ class ProgressController extends Controller
     {
         $validated = $request->validate([
             'date' => ['required', 'date', 'before_or_equal:today'],
-            'weight' => ['nullable', 'numeric', 'min:20', 'max:300'],
+            'weight' => ['required', 'numeric', 'min:20', 'max:300'],
+            'height' => ['nullable', 'numeric', 'min:50', 'max:250'],
             'body_fat_percentage' => ['nullable', 'numeric', 'min:3', 'max:80'],
             'muscle_mass' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'chest' => ['nullable', 'numeric', 'min:20', 'max:250'],
             'waist' => ['nullable', 'numeric', 'min:20', 'max:250'],
             'hips' => ['nullable', 'numeric', 'min:20', 'max:250'],
             'biceps' => ['nullable', 'numeric', 'min:10', 'max:100'],
+            'arms' => ['nullable', 'numeric', 'min:10', 'max:100'],
             'thighs' => ['nullable', 'numeric', 'min:20', 'max:150'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'progress_photo' => ['nullable', 'image', 'max:2048'],
+            'target_weight' => ['nullable', 'numeric', 'min:20', 'max:300'],
+            'target_body_fat' => ['nullable', 'numeric', 'min:3', 'max:80'],
         ]);
 
         $user = Auth::user();
+        
+        if ($request->has('height')) {
+            $user->height = $validated['height'];
+        }
+        if ($request->has('target_weight')) {
+            $user->target_weight = $validated['target_weight'];
+        }
+        if ($request->has('target_body_fat')) {
+            $user->target_body_fat = $validated['target_body_fat'];
+        }
+
+        if ($user->isDirty()) {
+            $user->save();
+        }
+
         $heightMeters = $user->height ? ((float) $user->height / 100) : null;
-        $weight = isset($validated['weight']) ? (float) $validated['weight'] : null;
+        $weight = (float) $validated['weight'];
 
         if ($heightMeters && $weight) {
             $validated['bmi'] = round($weight / ($heightMeters * $heightMeters), 1);
+        }
+
+        if ($request->hasFile('progress_photo')) {
+            $path = $request->file('progress_photo')->store('progress_photos', 'public');
+            $validated['progress_photo'] = $path;
         }
 
         $metricDate = Carbon::parse($validated['date'])->startOfDay();
