@@ -126,15 +126,7 @@
             </p>
         </div>
 
-        {{-- Workout Music --}}
-        <div class="fade-in-up delay-4" style="background:linear-gradient(135deg,rgba(236,72,153,.1),rgba(236,72,153,.02));border:1px solid rgba(236,72,153,.3);border-radius:20px;padding:1.6rem;position:relative;min-height:140px;display:flex;flex-direction:column;justify-content:center;text-align:center;">
-            <div style="font-size:2.5rem;margin-bottom:.8rem;filter:drop-shadow(0 0 10px rgba(236,72,153,.4));">🎵</div>
-            <h2 style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:.4rem;">Workout Music</h2>
-            <p style="font-size:.78rem;color:rgba(255,255,255,.5);margin-bottom:1.2rem;">Pump up your energy with curated tracks.</p>
-            <a href="{{ route('music.index') }}" style="background:rgba(236,72,153,.2);color:#f9a8d4;border:1px solid rgba(236,72,153,.4);padding:8px 16px;border-radius:10px;font-size:.8rem;font-weight:700;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(236,72,153,.3)';this.style.transform='scale(1.05)'" onmouseout="this.style.background='rgba(236,72,153,.2)';this.style.transform='scale(1)'">
-                Open Player →
-            </a>
-        </div>
+
     </div>
 
     {{-- Recent Workouts & Upcoming Sessions --}}

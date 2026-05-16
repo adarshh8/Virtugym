@@ -124,6 +124,7 @@ Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(functi
         // TRAINER AVAILABILITY ROUTES
         Route::get('/availability', [TrainerAvailabilityController::class, 'index'])->name('availability.index');
         Route::post('/availability', [TrainerAvailabilityController::class, 'store'])->name('availability.store');
+        Route::put('/availability/{id}', [TrainerAvailabilityController::class, 'update'])->name('availability.update');
         Route::delete('/availability/{id}', [TrainerAvailabilityController::class, 'destroy'])->name('availability.destroy');
         Route::get('/withdrawals', [TrainerDashboardController::class, 'withdrawalRequests'])->name('withdrawals');
 Route::post('/withdrawal/request', [TrainerDashboardController::class, 'requestWithdrawal'])->name('withdrawal.request');

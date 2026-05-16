@@ -17,32 +17,117 @@ class TrainerAvailabilityController extends Controller
             ->orderBy('day_of_week')
             ->orderBy('start_time')
             ->get();
+
+        $startOfWeek = now()->startOfWeek();
+        $endOfWeek = now()->endOfWeek();
+        
+        // Weekly Stats
+        $confirmedBookings = Booking::where('trainer_id', $trainer->id)
+            ->whereBetween('session_date', [$startOfWeek, $endOfWeek])
+            ->where('status', 'confirmed')
+            ->get();
             
-        return view('trainer.availability', compact('availabilities'));
+        $weeklyBookingsCount = $confirmedBookings->count();
+        $weeklyEarnings = $confirmedBookings->sum('total_amount');
+        
+        $cancelledBookingsCount = Booking::where('trainer_id', $trainer->id)
+            ->whereBetween('session_date', [$startOfWeek, $endOfWeek])
+            ->where('status', 'cancelled')
+            ->count();
+            
+        // For total slots, we count occurrences across the week (this is a simplified logic)
+        $totalSlotsCount = $availabilities->count() * 7; 
+        
+        // Today's Bookings
+        $todaysBookings = Booking::where('trainer_id', $trainer->id)
+            ->whereDate('session_date', now()->toDateString())
+            ->where('status', 'confirmed')
+            ->get();
+
+        // Group availabilities by day for the calendar view
+        $groupedAvailabilities = $availabilities->groupBy('day_of_week');
+
+        // Check each slot's booked status for the current week specifically
+        foreach ($availabilities as $slot) {
+            $slot->is_booked_this_week = Booking::where('trainer_id', $trainer->id)
+                ->where('day_of_week', (int)$slot->day_of_week)
+                ->whereBetween('session_date', [$startOfWeek, $endOfWeek])
+                ->where('status', 'confirmed')
+                ->exists();
+                
+            $slot->bookings_count = Booking::where('trainer_id', $trainer->id)
+                ->where('day_of_week', (int)$slot->day_of_week)
+                ->where('status', 'confirmed')
+                ->count();
+        }
+            
+        return view('trainer.availability', compact(
+            'availabilities', 
+            'groupedAvailabilities', 
+            'weeklyBookingsCount', 
+            'totalSlotsCount',
+            'weeklyEarnings',
+            'cancelledBookingsCount',
+            'todaysBookings'
+        ));
     }
     
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'day_of_week' => 'required|integer|min:0|max:6',
+            'day_of_week' => 'sometimes|array',
+            'day_of_week.*' => 'integer|min:0|max:6',
+            'single_day' => 'sometimes|integer|min:0|max:6',
             'start_time' => 'required',
             'end_time' => 'required',
+            'session_type' => 'nullable|string',
+            'is_recurring' => 'nullable|boolean'
         ]);
         
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
+
+        $days = $request->day_of_week ?? [$request->single_day];
         
-        $availability = TrainerAvailability::create([
-            'trainer_id' => Auth::id(),
-            'day_of_week' => (int)$request->day_of_week,
+        foreach ($days as $day) {
+            TrainerAvailability::create([
+                'trainer_id' => Auth::id(),
+                'day_of_week' => (int)$day,
+                'start_time' => $request->start_time,
+                'end_time' => $request->end_time,
+                'session_type' => $request->session_type ?? 'General',
+                'is_recurring' => $request->has('is_recurring'),
+                'is_booked' => false
+            ]);
+        }
+        
+        return redirect()->back()->with('success', 'Availability slots added successfully!');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $availability = TrainerAvailability::where('trainer_id', Auth::id())->findOrFail($id);
+        
+        $validator = Validator::make($request->all(), [
+            'start_time' => 'required',
+            'end_time' => 'required',
+            'session_type' => 'nullable|string',
+            'is_recurring' => 'nullable|boolean'
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator);
+        }
+
+        $availability->update([
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
-            'is_recurring' => false,
-            'is_booked' => false
+            'session_type' => $request->session_type ?? $availability->session_type,
+            'is_recurring' => $request->has('is_recurring')
         ]);
-        
-        return redirect()->back()->with('success', 'Availability slot added successfully!');
+
+        return redirect()->back()->with('success', 'Slot updated successfully!');
     }
     
     public function destroy($id)
