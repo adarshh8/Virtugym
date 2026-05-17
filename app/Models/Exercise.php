@@ -12,6 +12,6 @@ class Exercise extends Model
     protected $fillable = [
         'name', 'category', 'muscle_group', 'equipment', 
         'difficulty', 'instructions', 'tips', 'image_url',
-        'video_url', 'calories_per_hour'
+        'video_url', 'calories_per_hour', 'benefits', 'precautions'
     ];
 }

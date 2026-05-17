@@ -13,6 +13,8 @@ use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\AIController;
 use App\Http\Controllers\MusicController;
+use App\Http\Controllers\WaterIntakeController;
+use App\Http\Controllers\MindfulnessController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -74,6 +76,14 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
     Route::get('/music/default-track', [MusicController::class, 'defaultTrack'])->name('music.default');
     Route::get('/music/background-track', [MusicController::class, 'backgroundTrack'])->name('music.background');
     
+    // Water Intake
+    Route::get('/water', [WaterIntakeController::class, 'index'])->name('water.index');
+    Route::post('/water', [WaterIntakeController::class, 'store'])->name('water.store');
+
+    // Mindfulness & Recovery
+    Route::get('/mindfulness', [MindfulnessController::class, 'index'])->name('mindfulness.index');
+    Route::get('/mindfulness/{id}', [MindfulnessController::class, 'show'])->name('mindfulness.show');
+
     // Profile
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
@@ -82,6 +92,7 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
     // ============ AI ROUTES ============
     Route::prefix('ai')->name('ai.')->group(function () {
         Route::get('/dashboard', [AIController::class, 'index'])->name('dashboard');
+        Route::get('/live-coach', [AIController::class, 'liveCoach'])->name('live-coach');
         Route::get('/recommend-workout', [AIController::class, 'recommendWorkout'])->name('recommend-workout');
         Route::post('/analyze-form', [AIController::class, 'analyzeForm'])->name('analyze-form');
         Route::post('/generate-plan', [AIController::class, 'generatePlan'])->name('generate-plan');
