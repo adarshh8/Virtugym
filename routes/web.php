@@ -150,3 +150,8 @@ Route::post('/withdrawal/request', [TrainerDashboardController::class, 'requestW
         Route::post('/end/{booking_id}', [VideoCallController::class, 'endMeeting'])->name('end');
     });
 });
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok'
+    ]);
+});
