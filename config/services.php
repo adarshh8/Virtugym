@@ -37,6 +37,7 @@ return [
 
     'youtube' => [
         'key' => env('YOUTUBE_API_KEY'),
+        'background_video_id' => env('YOUTUBE_BACKGROUND_VIDEO_ID', 'jfKfPfyJRdk'),
     ],
 
     'razorpay' => [

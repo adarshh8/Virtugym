@@ -38,7 +38,7 @@
                 <tbody class="divide-y divide-gray-700">
                     @foreach($bookings as $booking)
                     @php
-                        $refundUpiId = $booking->refund_upi_id ?: ($booking->trainee->upi_id ?? null);
+                        $refundUpiId = $booking->trainee->upi_id ?? null;
                     @endphp
                     <tr class="hover:bg-gray-700/30 transition">
                         <td class="px-6 py-3 font-medium text-gray-200">{{ $booking->trainee->name ?? 'N/A' }}</td>
@@ -67,11 +67,9 @@
                                     <div>Trainer: {{ $booking->trainer->name ?? 'N/A' }}</div>
                                     @if($refundUpiId)
                                         <div>UPI: <span class="font-semibold text-gray-200">{{ $refundUpiId }}</span></div>
-                                        @if(!$booking->refund_upi_id)
-                                            <div class="text-yellow-300">Using trainee profile UPI</div>
-                                        @endif
+                                        <div class="text-yellow-300">From trainee profile</div>
                                     @else
-                                        <div class="text-red-300">UPI: Missing from trainee profile</div>
+                                        <div class="text-gray-500">UPI: Not added yet</div>
                                     @endif
                                     @if($booking->cancellation_reason)
                                         <div>Reason: {{ $booking->cancellation_reason }}</div>

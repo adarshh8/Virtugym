@@ -113,6 +113,54 @@ class MusicController extends Controller
         ]);
     }
 
+    public function backgroundTrack()
+    {
+        $apiKey = config('services.youtube.key');
+        $fallbackVideoId = config('services.youtube.background_video_id');
+
+        if (!$apiKey) {
+            return response()->json([
+                'song' => [
+                    'video_id' => $fallbackVideoId,
+                    'title' => 'VirtuGym background workout music',
+                    'channel' => 'YouTube',
+                ],
+            ]);
+        }
+
+        try {
+            $response = $this->youtubeSearch('gym workout music motivation clean no copyright', 1, $apiKey);
+        } catch (ConnectionException|RequestException $exception) {
+            return response()->json([
+                'song' => [
+                    'video_id' => $fallbackVideoId,
+                    'title' => 'VirtuGym background workout music',
+                    'channel' => 'YouTube',
+                ],
+            ]);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'song' => [
+                    'video_id' => $fallbackVideoId,
+                    'title' => 'VirtuGym background workout music',
+                    'channel' => 'YouTube',
+                ],
+            ]);
+        }
+
+        $item = collect($response->json('items', []))->firstWhere('id.videoId');
+
+        return response()->json([
+            'song' => [
+                'video_id' => $item['id']['videoId'] ?? $fallbackVideoId,
+                'title' => $item['snippet']['title'] ?? 'VirtuGym background workout music',
+                'channel' => $item['snippet']['channelTitle'] ?? 'YouTube',
+            ],
+        ]);
+    }
+
     private function youtubeSearch(string $query, int $maxResults, string $apiKey)
     {
         return Http::connectTimeout(3)

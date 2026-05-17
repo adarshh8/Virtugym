@@ -493,7 +493,6 @@ class BookingController extends Controller
         })->findOrFail($id);
 
         $isTrainer = Auth::id() == $booking->trainer_id;
-        $isTrainee = Auth::id() == $booking->trainee_id;
         
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:confirmed,completed,cancelled',
@@ -512,6 +511,10 @@ class BookingController extends Controller
             abort(403, 'Only trainers can mark sessions as completed.');
         }
 
+        if ($request->status === 'cancelled' && !$isTrainer) {
+            abort(403, 'Trainees cannot cancel sessions. Please contact your trainer or admin for help.');
+        }
+
         if ($request->status === 'confirmed') {
             abort(403, 'Bookings cannot be restored from this screen.');
         }
@@ -525,17 +528,11 @@ class BookingController extends Controller
             $updateData['cancelled_at'] = now();
             $updateData['cancelled_by'] = Auth::id();
             $updateData['cancellation_reason'] = $request->cancellation_reason;
-            $updateData['cancellation_policy'] = $isTrainer ? 'trainer_refund' : 'trainee_no_refund';
+            $updateData['cancellation_policy'] = 'trainer_refund';
 
-            if ($isTrainer) {
-                $refundData = $this->createTrainerCancellationRefundRequest($booking);
-                $updateData = array_merge($updateData, $refundData);
-                $message = 'Session cancelled. A refund request has been sent to admin for the trainee.';
-            } elseif ($isTrainee) {
-                $updateData['refund_status'] = 'not_applicable';
-                $updateData['refund_amount'] = 0;
-                $message = 'Session cancelled. Trainee cancellations are not eligible for a refund.';
-            }
+            $refundData = $this->createTrainerCancellationRefundRequest($booking);
+            $updateData = array_merge($updateData, $refundData);
+            $message = 'Session cancelled. A refund request has been sent to admin for the trainee.';
         }
 
         $booking->update($updateData);

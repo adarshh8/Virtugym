@@ -369,8 +369,16 @@
                                             </form>
                                         @endif
 
-                                        <button onclick="openRescheduleModal('{{ $booking->id }}')" class="action-btn">Reschedule</button>
-                                        <button class="action-btn danger">Cancel</button>
+                                        @if($isTrainer)
+                                            <button onclick="openRescheduleModal('{{ $booking->id }}')" class="action-btn">Reschedule</button>
+                                            <form method="POST" action="{{ route('bookings.update', $booking->id) }}" onsubmit="return confirmTrainerCancellation(this)">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="status" value="cancelled">
+                                                <input type="hidden" name="cancellation_reason" value="">
+                                                <button type="submit" class="action-btn danger">Cancel</button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </div>
 
@@ -445,6 +453,20 @@
                             <span style="position:absolute;top:1rem;right:1rem;font-size:.7rem;color:#f43f5e;background:rgba(244,63,94,.1);padding:2px 8px;border-radius:4px;font-weight:700;">Cancelled</span>
                             <h3 style="font-size:1rem;font-weight:700;color:var(--vg-text-strong);margin-bottom:4px;">{{ $partnerName }}</h3>
                             <p style="font-size:.8rem;color:var(--vg-text-muted);margin-bottom:12px;">{{ \Carbon\Carbon::parse($booking->session_date)->format('M d, Y • h:i A') }}</p>
+                            @if($booking->cancellation_reason)
+                                <div style="background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:.8rem;margin-bottom:12px;">
+                                    <p style="font-size:.68rem;color:var(--vg-text-muted);text-transform:uppercase;letter-spacing:.05em;font-weight:800;margin-bottom:4px;">Cancellation Reason</p>
+                                    <p style="font-size:.82rem;color:var(--vg-text-strong);line-height:1.45;">{{ $booking->cancellation_reason }}</p>
+                                </div>
+                            @endif
+                            @if(!$isTrainer && ($booking->refund_status ?? null))
+                                <p style="font-size:.75rem;color:var(--vg-text-muted);margin-bottom:12px;">
+                                    Refund status:
+                                    <span style="color:{{ ($booking->refund_status ?? '') === 'processed' ? '#10b981' : '#fbbf24' }};font-weight:700;">
+                                        {{ str_replace('_', ' ', ucfirst($booking->refund_status)) }}
+                                    </span>
+                                </p>
+                            @endif
                             @if(!$isTrainer && $partner)
                                 <a href="{{ route('book.trainer.create', $partner->id) }}" style="display:inline-block;font-size:.75rem;color:var(--vg-accent);font-weight:600;text-decoration:none;">Rebook Session →</a>
                             @endif
@@ -657,6 +679,18 @@
         });
 
         return confirm(`Are you sure you want to mark ${checkedSelectors.length} sessions as completed?`);
+    }
+
+    function confirmTrainerCancellation(form) {
+        const reason = prompt('Please enter the cancellation reason. Admin will review the trainee refund request.');
+
+        if (!reason || reason.trim().length < 5) {
+            alert('Cancellation reason must be at least 5 characters.');
+            return false;
+        }
+
+        form.querySelector('input[name="cancellation_reason"]').value = reason.trim();
+        return confirm('Cancel this session and send a refund request to admin?');
     }
 
     // Close modal on click outside

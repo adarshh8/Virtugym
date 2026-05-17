@@ -72,6 +72,7 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
     Route::get('/music', [MusicController::class, 'index'])->name('music.index');
     Route::get('/music/search', [MusicController::class, 'search'])->name('music.search');
     Route::get('/music/default-track', [MusicController::class, 'defaultTrack'])->name('music.default');
+    Route::get('/music/background-track', [MusicController::class, 'backgroundTrack'])->name('music.background');
     
     // Profile
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');

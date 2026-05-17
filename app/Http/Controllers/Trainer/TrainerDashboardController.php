@@ -34,9 +34,7 @@ class TrainerDashboardController extends Controller
             ->get();
         
         // Financials
-        $totalEarnings = Booking::where('trainer_id', $trainer->id)
-            ->whereIn('status', ['confirmed', 'completed'])
-            ->sum('amount');
+        $totalEarnings = $this->grossTrainerWalletAmount($trainer->id);
             
         $totalWithdrawn = WithdrawalRequest::where('trainer_id', $trainer->id)
             ->where('status', 'completed')
@@ -188,9 +186,7 @@ class TrainerDashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
         
-        $totalEarnings = Booking::where('trainer_id', Auth::id())
-            ->whereIn('status', ['confirmed', 'completed'])
-            ->sum('amount');
+        $totalEarnings = $this->grossTrainerWalletAmount(Auth::id());
             
         $monthlyEarnings = Booking::where('trainer_id', Auth::id())
             ->whereBetween('session_date', [now()->startOfMonth(), now()->endOfMonth()])
@@ -235,9 +231,7 @@ public function requestWithdrawal(Request $request)
         return redirect()->back()->with('error', 'You already have a pending withdrawal request. Please wait for the admin to process it.');
     }
     
-    $totalEarnings = Booking::where('trainer_id', Auth::id())
-        ->whereIn('status', ['confirmed', 'completed'])
-        ->sum('amount');
+    $totalEarnings = $this->grossTrainerWalletAmount(Auth::id());
     
     $totalWithdrawn = WithdrawalRequest::where('trainer_id', Auth::id())
         ->where('status', 'completed')
@@ -258,5 +252,22 @@ public function requestWithdrawal(Request $request)
     ]);
     
     return redirect()->back()->with('success', 'Withdrawal request submitted successfully. Admin will review it.');
+}
+
+private function grossTrainerWalletAmount(string $trainerId): float
+{
+    // Include all bookings: confirmed, completed, and cancelled
+    $activeEarnings = Booking::where('trainer_id', $trainerId)
+        ->whereIn('status', ['confirmed', 'completed', 'cancelled'])
+        ->sum('amount');
+
+    // Only deduct processed refunds (not pending)
+    $processedRefunds = Booking::where('trainer_id', $trainerId)
+        ->where('status', 'cancelled')
+        ->where('cancellation_policy', 'trainer_refund')
+        ->where('refund_status', 'processed')
+        ->sum('refund_amount');
+
+    return max(0, (float) $activeEarnings - (float) $processedRefunds);
 }
 }

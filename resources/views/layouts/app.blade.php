@@ -455,6 +455,25 @@
             border-radius: 50px;
             font-weight: 700;
         }
+        .music-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--vg-border);
+            background: var(--vg-panel);
+            color: var(--vg-text-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s ease;
+        }
+        .music-toggle:hover,
+        .music-toggle.playing {
+            color: var(--vg-text-strong);
+            border-color: var(--vg-border-strong);
+            background: var(--vg-accent-soft);
+            box-shadow: 0 6px 18px var(--vg-accent-glow);
+        }
 
         /* Mobile */
         @media (max-width: 900px) {
@@ -536,6 +555,7 @@
     <div class="orb o1"></div>
     <div class="orb o2"></div>
     <div class="orb o3"></div>
+    <div id="youtubeBackgroundPlayer" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;" aria-hidden="true"></div>
 
     <!-- NAVBAR -->
     <nav class="nav-dark">
@@ -558,6 +578,9 @@
             </div>
 
             <div style="display:flex;align-items:center;gap:1.2rem;">
+                <button type="button" id="musicToggle" class="music-toggle" title="Toggle background music" aria-label="Toggle background music">
+                    <i data-lucide="music" class="w-4 h-4"></i>
+                </button>
                 
                 <!-- Notification Bell -->
                 <button class="relative text-gray-400 hover:text-white transition focus:outline-none flex items-center justify-center">
@@ -832,6 +855,157 @@
         document.body.style.opacity = '0';
         document.body.style.transition = 'opacity 0.25s ease';
     });
+
+    // YouTube-backed gym background music. Browsers allow the player to load on
+    // page load, but audible playback still needs the first user gesture.
+    (function(){
+        const toggle = document.getElementById('musicToggle');
+        const STORAGE_KEY = 'virtugym-background-music';
+        const endpoint = @json(route('music.background'));
+        let player = null;
+        let videoId = null;
+        let isPlaying = false;
+        let enabled = localStorage.getItem(STORAGE_KEY) !== 'off';
+
+        function refreshToggle() {
+            toggle?.classList.toggle('playing', enabled && isPlaying);
+            toggle?.setAttribute('aria-pressed', enabled && isPlaying ? 'true' : 'false');
+            toggle?.setAttribute('title', enabled ? 'Background music on' : 'Background music off');
+        }
+
+        function loadYouTubeApi() {
+            if (window.YT && window.YT.Player) return Promise.resolve();
+            if (window.virtugymYouTubeApiPromise) return window.virtugymYouTubeApiPromise;
+
+            window.virtugymYouTubeApiPromise = new Promise(resolve => {
+                const previousReady = window.onYouTubeIframeAPIReady;
+                window.onYouTubeIframeAPIReady = function() {
+                    if (typeof previousReady === 'function') previousReady();
+                    resolve();
+                };
+
+                const script = document.createElement('script');
+                script.src = 'https://www.youtube.com/iframe_api';
+                document.head.appendChild(script);
+            });
+
+            return window.virtugymYouTubeApiPromise;
+        }
+
+        async function getBackgroundVideoId() {
+            if (videoId) return videoId;
+
+            try {
+                const response = await fetch(endpoint, {
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'same-origin',
+                });
+                const payload = await response.json();
+                videoId = payload?.song?.video_id || null;
+            } catch (error) {
+                videoId = null;
+            }
+
+            return videoId;
+        }
+
+        async function createPlayer() {
+            if (player) return player;
+
+            const nextVideoId = await getBackgroundVideoId();
+            if (!nextVideoId) return null;
+
+            await loadYouTubeApi();
+
+            player = new YT.Player('youtubeBackgroundPlayer', {
+                width: '1',
+                height: '1',
+                videoId: nextVideoId,
+                playerVars: {
+                    autoplay: 0,
+                    controls: 0,
+                    disablekb: 1,
+                    fs: 0,
+                    loop: 1,
+                    modestbranding: 1,
+                    playsinline: 1,
+                    playlist: nextVideoId,
+                    rel: 0,
+                },
+                events: {
+                    onReady: function(event) {
+                        event.target.setVolume(38);
+                        if (enabled) startMusic(false);
+                    },
+                    onStateChange: function(event) {
+                        if (event.data === YT.PlayerState.PLAYING) {
+                            isPlaying = true;
+                            refreshToggle();
+                        } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
+                            isPlaying = false;
+                            refreshToggle();
+                        }
+                    },
+                    onError: function() {
+                        isPlaying = false;
+                        refreshToggle();
+                    },
+                },
+            });
+
+            return player;
+        }
+
+        async function startMusic(force = false) {
+            if (!enabled && !force) return;
+            const nextPlayer = await createPlayer();
+            if (!nextPlayer || isPlaying || typeof nextPlayer.playVideo !== 'function') return;
+
+            try {
+                enabled = true;
+                localStorage.setItem(STORAGE_KEY, 'on');
+                nextPlayer.unMute();
+                nextPlayer.setVolume(38);
+                nextPlayer.playVideo();
+                isPlaying = true;
+                refreshToggle();
+            } catch (error) {
+                isPlaying = false;
+                refreshToggle();
+            }
+        }
+
+        function stopMusic() {
+            isPlaying = false;
+            if (player && typeof player.pauseVideo === 'function') {
+                player.pauseVideo();
+            }
+            refreshToggle();
+        }
+
+        toggle?.addEventListener('click', function(){
+            if (isPlaying) {
+                enabled = false;
+                localStorage.setItem(STORAGE_KEY, 'off');
+                stopMusic();
+            } else {
+                enabled = true;
+                localStorage.setItem(STORAGE_KEY, 'on');
+                startMusic(true);
+            }
+        });
+
+        function unlockFromGesture(event) {
+            if (toggle && event.target && toggle.contains(event.target)) return;
+            startMusic(false);
+        }
+
+        refreshToggle();
+        window.addEventListener('load', () => createPlayer());
+        ['pointerdown', 'keydown', 'touchstart'].forEach(eventName => {
+            window.addEventListener(eventName, unlockFromGesture, { passive: true });
+        });
+    })();
     </script>
     @stack('modals')
     @stack('scripts')

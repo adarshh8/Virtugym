@@ -112,9 +112,15 @@ class AdminDashboardController extends Controller
             return redirect()->back()->with('error', 'Refund amount is missing for this booking.');
         }
 
-        $upiId = $booking->refund_upi_id ?: ($booking->trainee->upi_id ?? null);
-        if ($upiId && $upiId !== $booking->refund_upi_id) {
-            $booking->refund_upi_id = $upiId;
+        $upiId = $booking->trainee->upi_id ?? null;
+
+        if (!$upiId) {
+            return redirect()->back()->with('error', 'Ask the trainee to add their UPI ID in profile before approving this refund.');
+        }
+
+        $trainerBalance = $this->availableTrainerBalance((string) $booking->trainer_id);
+        if ($amount > $trainerBalance) {
+            return redirect()->back()->with('error', "Trainer wallet has insufficient balance. Available: ₹{$trainerBalance}.");
         }
 
         $payment = Payment::where('booking_id', $booking->id)->first();
@@ -150,8 +156,9 @@ class AdminDashboardController extends Controller
             }
 
             $traineeName = $booking->trainee->name ?? 'the trainee';
+            $trainerName = $booking->trainer->name ?? 'trainer';
 
-            return redirect()->back()->with('success', "Refund of ₹{$amount} processed for {$traineeName}.");
+            return redirect()->back()->with('success', "Refund of ₹{$amount} approved for {$traineeName}. It has been deducted from {$trainerName}'s wallet.");
         } catch (\Exception $e) {
             \Log::error('Admin booking refund failed: ' . $e->getMessage(), [
                 'booking_id' => $booking->id,
@@ -178,6 +185,27 @@ class AdminDashboardController extends Controller
         $booking->delete();
         
         return redirect()->back()->with('success', 'Booking deleted successfully.');
+    }
+
+    private function availableTrainerBalance(string $trainerId): float
+    {
+        // Include all bookings: confirmed, completed, and cancelled
+        $earned = Booking::where('trainer_id', $trainerId)
+            ->whereIn('status', ['confirmed', 'completed', 'cancelled'])
+            ->sum('amount');
+
+        // Only deduct processed refunds (not pending)
+        $processedTrainerRefunds = Booking::where('trainer_id', $trainerId)
+            ->where('status', 'cancelled')
+            ->where('cancellation_policy', 'trainer_refund')
+            ->where('refund_status', 'processed')
+            ->sum('refund_amount');
+
+        $withdrawn = WithdrawalRequest::where('trainer_id', $trainerId)
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        return max(0, round((float) $earned - (float) $processedTrainerRefunds - (float) $withdrawn, 2));
     }
     
     // Withdrawal Requests
