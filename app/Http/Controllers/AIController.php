@@ -26,6 +26,11 @@ class AIController extends Controller
         return view('ai.dashboard', compact('aiAvailable'));
     }
     
+    public function liveCoach()
+    {
+        return view('ai.live-coach');
+    }
+    
     public function recommendWorkout()
     {
         $user = Auth::user();

@@ -644,9 +644,14 @@
                 </a>
 
                 <!-- AI COACH SIDEBAR LINK -->
-                <a href="{{ route('ai.dashboard') }}" class="sidebar-item {{ request()->routeIs('ai.*') ? 'active' : '' }}">
+                <a href="{{ route('ai.dashboard') }}" class="sidebar-item {{ request()->routeIs('ai.dashboard') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="bot"></i></span>
                     <span>AI Coach</span>
+                </a>
+                
+                <a href="{{ route('ai.live-coach') }}" class="sidebar-item {{ request()->routeIs('ai.live-coach') ? 'active' : '' }}">
+                    <span class="s-icon"><i data-lucide="camera"></i></span>
+                    <span>Live Form Check</span>
                 </a>
 
                 <a href="{{ route('music.index') }}" class="sidebar-item {{ request()->routeIs('music.*') ? 'active' : '' }}">
@@ -659,10 +664,6 @@
 
                 <a href="{{ route('mindfulness.index') }}" class="sidebar-item {{ request()->routeIs('mindfulness.*') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="leaf"></i></span><span>Mindfulness</span>
-                </a>
-
-                <a href="{{ route('progress.report') }}" class="sidebar-item {{ request()->routeIs('progress.report') ? 'active' : '' }}">
-                    <span class="s-icon"><i data-lucide="file-chart-column"></i></span><span>Progress Report</span>
                 </a>
 
                 @if(Auth::user()->role == 'trainer')
