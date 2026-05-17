@@ -1,39 +1,53 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('password.store') }}">
+@extends('layouts.guest')
+
+@section('content')
+<div>
+    <div class="badge"><span class="bdot"></span> OTP Verification</div>
+    <div class="form-title">Change Password</div>
+    <div class="form-sub">Enter the OTP sent to your email</div>
+
+    @if (session('status'))
+        <div style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:#86efac;border-radius:12px;padding:.85rem 1rem;font-size:.82rem;margin-bottom:1rem;">
+            {{ session('status') }}
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('password.store') }}" style="display:flex;flex-direction:column;gap:1rem;">
         @csrf
 
-        <!-- Password Reset Token -->
-        <input type="hidden" name="token" value="{{ $request->route('token') }}">
-
-        <!-- Email Address -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <label class="lbl">Email Address</label>
+            <input id="email" type="email" name="email" value="{{ old('email', $email) }}" required autofocus
+                   class="inp" placeholder="john@example.com" autocomplete="username">
+            @error('email')<p class="err">{{ $message }}</p>@enderror
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div>
+            <label class="lbl">6-Digit OTP</label>
+            <input id="otp" type="text" name="otp" value="{{ old('otp') }}" required
+                   inputmode="numeric" pattern="[0-9]{6}" maxlength="6" class="inp" placeholder="123456">
+            @error('otp')<p class="err">{{ $message }}</p>@enderror
         </div>
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                type="password"
-                                name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;">
+            <div>
+                <label class="lbl">New Password</label>
+                <input id="password" type="password" name="password" required autocomplete="new-password"
+                       class="inp" placeholder="••••••••">
+                @error('password')<p class="err">{{ $message }}</p>@enderror
+            </div>
+            <div>
+                <label class="lbl">Confirm</label>
+                <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password"
+                       class="inp" placeholder="••••••••">
+            </div>
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Reset Password') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="btn-go" style="margin-top:.3rem;">Change Password</button>
+
+        <p style="text-align:center;font-size:.83rem;color:rgba(255,255,255,.35);">
+            Need a new code? <a href="{{ route('password.request') }}" class="link-a">Send OTP again</a>
+        </p>
     </form>
-</x-guest-layout>
+</div>
+@endsection

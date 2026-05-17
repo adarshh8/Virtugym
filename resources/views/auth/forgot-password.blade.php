@@ -1,25 +1,32 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
-    </div>
+@extends('layouts.guest')
 
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+@section('content')
+<div>
+    <div class="badge"><span class="bdot"></span> Password Help</div>
+    <div class="form-title">Forgot Password</div>
+    <div class="form-sub">Get a 6-digit OTP to change your password</div>
 
-    <form method="POST" action="{{ route('password.email') }}">
+    @if (session('status'))
+        <div style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:#86efac;border-radius:12px;padding:.85rem 1rem;font-size:.82rem;margin-bottom:1rem;">
+            {{ session('status') }}
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('password.email') }}" style="display:flex;flex-direction:column;gap:1rem;">
         @csrf
 
-        <!-- Email Address -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <label class="lbl">Email Address</label>
+            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
+                   class="inp" placeholder="john@example.com">
+            @error('email')<p class="err">{{ $message }}</p>@enderror
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Email Password Reset Link') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="btn-go" style="margin-top:.3rem;">Send OTP</button>
+
+        <p style="text-align:center;font-size:.83rem;color:rgba(255,255,255,.35);">
+            Remembered it? <a href="{{ route('login') }}" class="link-a">Sign In</a>
+        </p>
     </form>
-</x-guest-layout>
+</div>
+@endsection

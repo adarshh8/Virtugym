@@ -19,9 +19,11 @@
             </div>
             <div style="display:flex;gap:10px;align-items:center;">
                 {{-- Music Button --}}
+                @if(Auth::id() != $booking->trainer_id)
                 <a href="{{ route('music.index') }}" target="_blank" style="background:rgba(255,255,255,.2);color:#fff;padding:8px 16px;border-radius:10px;font-size:.8rem;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:6px;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.3)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">
                     <i data-lucide="music" style="width:16px;height:16px;"></i> Workout Music
                 </a>
+                @endif
 
                 @if(Auth::id() == $booking->trainer_id && !$booking->meeting_ended)
                     <button onclick="endMeeting()" style="background:#ef4444;color:#fff;padding:8px 16px;border-radius:10px;font-size:.8rem;font-weight:700;border:none;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">

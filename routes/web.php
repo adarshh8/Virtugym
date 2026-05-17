@@ -40,6 +40,8 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
     
     // Bookings
     Route::resource('bookings', BookingController::class)->only(['index', 'update']);
+    Route::post('/bookings/bulk-complete', [BookingController::class, 'bulkComplete'])->name('bookings.bulk-complete');
+    Route::post('/bookings/{id}/notes', [BookingController::class, 'saveNotes'])->name('bookings.save-notes');
     Route::get('/book-trainer/{id}', [BookingController::class, 'create'])->name('book.trainer.create');
     Route::post('/initiate-payment/{trainer_id}', [BookingController::class, 'initiatePayment'])->name('initiate.payment');
     Route::post('/payment-success', [BookingController::class, 'paymentSuccess'])->name('payment.success');
@@ -61,6 +63,8 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
 
     // Exercises
     Route::resource('exercises', ExerciseController::class);
+    Route::post('/exercises/add-to-workout', [ExerciseController::class, 'addToWorkout'])->name('exercises.add-to-workout');
+    Route::get('/exercises/user-workouts/{user_id}', [ExerciseController::class, 'getUserWorkouts'])->name('exercises.user-workouts');
 
     // Progress
     Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
@@ -70,6 +74,7 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
     Route::get('/music', [MusicController::class, 'index'])->name('music.index');
     Route::get('/music/search', [MusicController::class, 'search'])->name('music.search');
     Route::get('/music/default-track', [MusicController::class, 'defaultTrack'])->name('music.default');
+    Route::get('/music/background-track', [MusicController::class, 'backgroundTrack'])->name('music.background');
     
     // Water Intake
     Route::get('/water', [WaterIntakeController::class, 'index'])->name('water.index');
@@ -114,6 +119,7 @@ Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(functi
     Route::delete('/trainers/{id}/delete', [AdminDashboardController::class, 'deleteTrainer'])->name('trainers.delete');
     
     Route::get('/bookings', [AdminDashboardController::class, 'bookings'])->name('bookings');
+    Route::post('/bookings/{id}/refund', [AdminDashboardController::class, 'processBookingRefund'])->name('bookings.refund');
     Route::delete('/bookings/{id}/delete', [AdminDashboardController::class, 'deleteBooking'])->name('bookings.delete');
     
     Route::get('/withdrawals', [AdminDashboardController::class, 'withdrawals'])->name('withdrawals');
@@ -125,12 +131,14 @@ Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(functi
     Route::prefix('trainer')->name('trainer.')->middleware(['role:trainer'])->group(function () {
         Route::get('/dashboard', [TrainerDashboardController::class, 'index'])->name('dashboard');
         Route::get('/clients', [TrainerDashboardController::class, 'clients'])->name('clients');
+        Route::get('/clients-api', [TrainerDashboardController::class, 'clientsApi'])->name('clients-api');
         Route::get('/schedule', [TrainerDashboardController::class, 'schedule'])->name('schedule');
         Route::post('/profile/update', [TrainerDashboardController::class, 'updateProfile'])->name('profile.update');
         
         // TRAINER AVAILABILITY ROUTES
         Route::get('/availability', [TrainerAvailabilityController::class, 'index'])->name('availability.index');
         Route::post('/availability', [TrainerAvailabilityController::class, 'store'])->name('availability.store');
+        Route::put('/availability/{id}', [TrainerAvailabilityController::class, 'update'])->name('availability.update');
         Route::delete('/availability/{id}', [TrainerAvailabilityController::class, 'destroy'])->name('availability.destroy');
         Route::get('/withdrawals', [TrainerDashboardController::class, 'withdrawalRequests'])->name('withdrawals');
 Route::post('/withdrawal/request', [TrainerDashboardController::class, 'requestWithdrawal'])->name('withdrawal.request');
@@ -152,4 +160,9 @@ Route::post('/withdrawal/request', [TrainerDashboardController::class, 'requestW
         Route::post('/start/{booking_id}', [VideoCallController::class, 'startMeeting'])->name('start');
         Route::post('/end/{booking_id}', [VideoCallController::class, 'endMeeting'])->name('end');
     });
+});
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok'
+    ]);
 });

@@ -11,7 +11,7 @@ class TrainerAvailability extends Model
     
     protected $fillable = [
         'trainer_id', 'day_of_week', 'start_time', 'end_time',
-        'is_recurring', 'specific_date', 'is_booked', 'booking_id'
+        'is_recurring', 'specific_date', 'is_booked', 'booking_id', 'session_type'
     ];
     
     protected $casts = [

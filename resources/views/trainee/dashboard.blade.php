@@ -126,15 +126,7 @@
             </p>
         </div>
 
-        {{-- Workout Music --}}
-        <div class="fade-in-up delay-4" style="background:linear-gradient(135deg,rgba(236,72,153,.1),rgba(236,72,153,.02));border:1px solid rgba(236,72,153,.3);border-radius:20px;padding:1.6rem;position:relative;min-height:140px;display:flex;flex-direction:column;justify-content:center;text-align:center;">
-            <div style="font-size:2.5rem;margin-bottom:.8rem;filter:drop-shadow(0 0 10px rgba(236,72,153,.4));">🎵</div>
-            <h2 style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:.4rem;">Workout Music</h2>
-            <p style="font-size:.78rem;color:rgba(255,255,255,.5);margin-bottom:1.2rem;">Pump up your energy with curated tracks.</p>
-            <a href="{{ route('music.index') }}" style="background:rgba(236,72,153,.2);color:#f9a8d4;border:1px solid rgba(236,72,153,.4);padding:8px 16px;border-radius:10px;font-size:.8rem;font-weight:700;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(236,72,153,.3)';this.style.transform='scale(1.05)'" onmouseout="this.style.background='rgba(236,72,153,.2)';this.style.transform='scale(1)'">
-                Open Player →
-            </a>
-        </div>
+
     </div>
 
     {{-- Recent Workouts & Upcoming Sessions --}}
@@ -173,21 +165,20 @@
             @if(isset($upcomingSessions) && $upcomingSessions->count() > 0)
                 <div style="display:flex;flex-direction:column;gap:.8rem;">
                     @foreach($upcomingSessions as $session)
+                        @php
+                            $sessionDate = \Carbon\Carbon::parse($session->session_date);
+                            $joinAt = $sessionDate->copy()->subMinutes(10);
+                            $canJoin = now()->greaterThanOrEqualTo($joinAt);
+                        @endphp
                         <div style="border-bottom:1px solid rgba(139,92,246,.1);padding-bottom:.8rem;position:relative;">
                             <p style="font-size:.88rem;font-weight:600;color:#e2d9f3;margin-bottom:2px;">{{ $session->trainer->specialization ?? 'Personal Training' }} with {{ $session->trainer->name ?? 'Trainer' }}</p>
-                            <p style="font-size:.75rem;color:rgba(255,255,255,.3);">{{ \Carbon\Carbon::parse($session->session_date)->format('M d, Y h:i A') }}</p>
+                            <p style="font-size:.75rem;color:rgba(255,255,255,.3);">{{ $sessionDate->format('M d, Y h:i A') }}</p>
                             <span style="font-size:.7rem;background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.25);padding:2px 8px;border-radius:50px;font-weight:600;display:inline-block;margin-top:4px;">{{ ucfirst($session->status) }}</span>
-                            @php
-                                $d = \Carbon\Carbon::parse($session->session_date);
-                                $now = now();
-                                if ($d->isFuture() && $d->diffInHours($now) < 24) {
-                                    $diff = $now->diff($d);
-                                    $countdown = $diff->h . 'h ' . $diff->i . 'm';
-                                    echo '<span style="font-size:.7rem;color:#fca5a5;font-weight:600;position:absolute;bottom:0.8rem;right:0;">Starts in '.$countdown.'</span>';
-                                } elseif ($d->isFuture()) {
-                                    echo '<span style="font-size:.7rem;color:#fca5a5;font-weight:600;position:absolute;bottom:0.8rem;right:0;">In '.$d->diffInDays($now).' days</span>';
-                                }
-                            @endphp
+                            @if($canJoin)
+                                <a href="{{ route('video-call.join', $session->id) }}" style="font-size:.7rem;color:#6ee7b7;font-weight:700;position:absolute;bottom:0.8rem;right:0;text-decoration:none;">Join Session</a>
+                            @else
+                                <span style="font-size:.7rem;color:#fca5a5;font-weight:600;position:absolute;bottom:0.8rem;right:0;">Opens {{ $joinAt->format('h:i A') }}</span>
+                            @endif
                         </div>
                     @endforeach
                 </div>

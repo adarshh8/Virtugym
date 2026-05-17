@@ -8,7 +8,6 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -21,7 +20,10 @@ class NewPasswordController extends Controller
      */
     public function create(Request $request): View
     {
-        return view('auth.reset-password', ['request' => $request]);
+        return view('auth.reset-password', [
+            'request' => $request,
+            'email' => $request->session()->get('password_reset_otp.email', $request->email),
+        ]);
     }
 
     /**
@@ -32,32 +34,51 @@ class NewPasswordController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'token' => ['required'],
             'email' => ['required', 'email'],
+            'otp' => ['required', 'digits:6'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function (User $user) use ($request) {
-                $user->forceFill([
-                    'password' => Hash::make($request->password),
-                    'remember_token' => Str::random(60),
-                ])->save();
+        $otpData = $request->session()->get('password_reset_otp');
+        $email = strtolower($request->email);
 
-                event(new PasswordReset($user));
-            }
-        );
+        if (!$otpData || ($otpData['email'] ?? null) !== $email) {
+            throw ValidationException::withMessages([
+                'email' => __('Please request a fresh OTP for this email address.'),
+            ]);
+        }
 
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
-        return $status == Password::PASSWORD_RESET
-                    ? redirect()->route('login')->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+        if (($otpData['expires_at'] ?? 0) < now()->timestamp) {
+            $request->session()->forget('password_reset_otp');
+
+            throw ValidationException::withMessages([
+                'otp' => __('This OTP has expired. Please request a new one.'),
+            ]);
+        }
+
+        if (!Hash::check($request->otp, $otpData['code_hash'] ?? '')) {
+            throw ValidationException::withMessages([
+                'otp' => __('The OTP is incorrect.'),
+            ]);
+        }
+
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => __('We could not find a user with that email address.'),
+            ]);
+        }
+
+        $user->forceFill([
+            'password' => Hash::make($request->password),
+            'remember_token' => Str::random(60),
+        ])->save();
+
+        event(new PasswordReset($user));
+
+        $request->session()->forget('password_reset_otp');
+
+        return redirect()->route('login')->with('status', __('Your password has been changed. Please sign in with the new password.'));
     }
 }

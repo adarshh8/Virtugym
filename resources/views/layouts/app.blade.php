@@ -455,6 +455,25 @@
             border-radius: 50px;
             font-weight: 700;
         }
+        .music-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--vg-border);
+            background: var(--vg-panel);
+            color: var(--vg-text-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s ease;
+        }
+        .music-toggle:hover,
+        .music-toggle.playing {
+            color: var(--vg-text-strong);
+            border-color: var(--vg-border-strong);
+            background: var(--vg-accent-soft);
+            box-shadow: 0 6px 18px var(--vg-accent-glow);
+        }
 
         /* Mobile */
         @media (max-width: 900px) {
@@ -536,6 +555,7 @@
     <div class="orb o1"></div>
     <div class="orb o2"></div>
     <div class="orb o3"></div>
+    <div id="youtubeBackgroundPlayer" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;" aria-hidden="true"></div>
 
     <!-- NAVBAR -->
     <nav class="nav-dark">
@@ -547,20 +567,36 @@
                 </div>
                 <div>
                     <div class="brand-name">VIRTU GYM</div>
-                    <div class="brand-sub">VIRTUAL TRAINER</div>
+                    <div class="brand-sub">{{ ucwords(strtolower(Auth::user()->name ?? 'Virtual Trainer')) }}</div>
                 </div>
             </a>
 
-            <div style="display:flex;align-items:center;gap:1rem;">
+            <!-- Search Bar (Optional) -->
+            <div class="hidden md:flex items-center bg-gray-800/50 border border-gray-700 rounded-full px-4 py-1.5 ml-8 mr-auto max-w-sm w-full">
+                <i data-lucide="search" class="w-4 h-4 text-gray-400 mr-2"></i>
+                <input type="text" placeholder="Search clients, bookings..." class="bg-transparent border-none text-sm text-white placeholder-gray-500 w-full focus:outline-none">
+            </div>
+
+            <div style="display:flex;align-items:center;gap:1.2rem;">
+                <button type="button" id="musicToggle" class="music-toggle" title="Toggle background music" aria-label="Toggle background music">
+                    <i data-lucide="music" class="w-4 h-4"></i>
+                </button>
+                
+                <!-- Notification Bell -->
+                <button class="relative text-gray-400 hover:text-white transition focus:outline-none flex items-center justify-center">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-gray-900">3</span>
+                </button>
+
                 <!-- User info -->
-                <div class="nav-user-info hidden sm:block text-right">
-                    <p class="nav-user-name">{{ Auth::user()->name ?? 'User' }}</p>
+                <div class="nav-user-info hidden lg:block text-right border-l border-gray-700/50 pl-4">
+                    <p class="nav-user-name">{{ ucwords(strtolower(Auth::user()->name ?? 'User')) }}</p>
                     <p class="nav-user-email">{{ Auth::user()->email ?? '' }}</p>
                 </div>
 
                 <!-- Avatar + dropdown -->
                 <div class="relative" id="userDropdown">
-                    <button onclick="toggleDropdown()" class="focus:outline-none">
+                    <button onclick="toggleDropdown()" class="focus:outline-none flex items-center">
                         <div class="user-avatar">{{ substr(Auth::user()->name ?? 'U', 0, 1) }}</div>
                     </button>
                     <div id="dropdownMenu" class="dropdown-menu absolute right-0 mt-3 py-2 z-50 hidden">
@@ -575,12 +611,12 @@
                             <button type="button" class="theme-choice" data-theme-choice="forest" title="Forest theme" aria-label="Forest theme"></button>
                             <button type="button" class="theme-choice" data-theme-choice="graphite" title="Graphite theme" aria-label="Graphite theme"></button>
                         </div>
-                        <a href="{{ route('dashboard') }}" style="padding:9px 16px;color:var(--vg-text-muted);font-size:.83rem;"><i data-lucide="chart-no-axes-combined" class="vg-inline-icon"></i>Dashboard</a>
-                        <a href="{{ route('profile.edit') }}" style="padding:9px 16px;color:var(--vg-text-muted);font-size:.83rem;"><i data-lucide="settings" class="vg-inline-icon"></i>Edit Profile</a>
+                        <a href="{{ route('profile.edit') }}" style="padding:9px 16px;color:var(--vg-text-muted);font-size:.83rem;"><i data-lucide="user" class="vg-inline-icon"></i>Profile</a>
+                        <a href="#" style="padding:9px 16px;color:var(--vg-text-muted);font-size:.83rem;"><i data-lucide="settings" class="vg-inline-icon"></i>Settings</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" style="padding:9px 16px;color:#f87171;font-size:.83rem;text-align:left;background:none;border:none;cursor:pointer;width:100%;">
-                                <i data-lucide="log-out" class="vg-inline-icon"></i>Sign Out
+                                <i data-lucide="log-out" class="vg-inline-icon"></i>Logout
                             </button>
                         </form>
                     </div>
@@ -626,23 +662,31 @@
                 <a href="{{ route('dashboard') }}" class="sidebar-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="chart-no-axes-combined"></i></span><span>Dashboard</span>
                 </a>
+                @if(Auth::user()->role == 'trainee')
                 <a href="{{ route('analytics.index') }}" class="sidebar-item {{ request()->routeIs('analytics.*') ? 'active' : '' }}">
-                    <span class="s-icon"><i data-lucide="trending-up"></i></span><span>Analytics</span>
+                    <span class="s-icon"><i data-lucide="trending-up"></i></span>
+                    <span>Analytics</span>
                 </a>
+                @endif
                 <a href="{{ route('workouts.index') }}" class="sidebar-item {{ request()->routeIs('workouts.*') ? 'active' : '' }}">
-                    <span class="s-icon"><i data-lucide="dumbbell"></i></span><span>Workouts</span>
+                    <span class="s-icon"><i data-lucide="dumbbell"></i></span>
+                    <span>{{ Auth::user()->role == 'trainer' ? 'Client Workouts' : 'Workouts' }}</span>
                 </a>
                 <a href="{{ route('exercises.index') }}" class="sidebar-item {{ request()->routeIs('exercises.*') ? 'active' : '' }}">
-                    <span class="s-icon"><i data-lucide="activity"></i></span><span>Exercises</span>
+                    <span class="s-icon"><i data-lucide="activity"></i></span>
+                    <span>{{ Auth::user()->role == 'trainer' ? 'Exercise Library' : 'Exercises' }}</span>
                 </a>
+                @if(Auth::user()->role == 'trainee')
                 <a href="{{ route('progress.index') }}" class="sidebar-item {{ request()->routeIs('progress.*') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="target"></i></span><span>Progress</span>
                 </a>
+                @endif
                 <a href="{{ route('chat.index') }}" class="sidebar-item {{ request()->routeIs('chat.*') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="message-circle"></i></span><span>Messages</span>
                     <span id="unreadBadge" class="hidden" style="margin-left:auto;"></span>
                 </a>
 
+                @if(Auth::user()->role == 'trainee')
                 <!-- AI COACH SIDEBAR LINK -->
                 <a href="{{ route('ai.dashboard') }}" class="sidebar-item {{ request()->routeIs('ai.dashboard') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="bot"></i></span>
@@ -655,8 +699,10 @@
                 </a>
 
                 <a href="{{ route('music.index') }}" class="sidebar-item {{ request()->routeIs('music.*') ? 'active' : '' }}">
-                    <span class="s-icon"><i data-lucide="music"></i></span><span>Workout Music</span>
+                    <span class="s-icon"><i data-lucide="music"></i></span>
+                    <span>Workout Music</span>
                 </a>
+                @endif
 
                 <a href="{{ route('water.index') }}" class="sidebar-item {{ request()->routeIs('water.*') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="droplets"></i></span><span>Water Tracker</span>
@@ -739,18 +785,7 @@
         </div>
     </main>
 
-    @if(Auth::user()->role == 'trainee')
-        <div id="globalMusicDock" style="position:fixed;right:18px;bottom:18px;z-index:60;display:none;align-items:center;gap:10px;background:rgba(8,8,26,.92);border:1px solid var(--vg-border);box-shadow:0 18px 40px rgba(0,0,0,.35);backdrop-filter:blur(14px);border-radius:14px;padding:10px 12px;max-width:min(330px,calc(100vw - 36px));">
-            <button type="button" id="globalMusicToggle" title="Play gym music" aria-label="Play gym music" style="width:34px;height:34px;border-radius:10px;border:1px solid var(--vg-border-strong);background:var(--vg-accent-soft);color:var(--vg-text-strong);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
-                <i data-lucide="music"></i>
-            </button>
-            <div style="min-width:0;">
-                <p id="globalMusicTitle" style="font-size:.75rem;color:var(--vg-text-strong);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px;">Gym Music</p>
-                <p style="font-size:.65rem;color:var(--vg-text-muted);">YouTube</p>
-            </div>
-            <iframe id="globalMusicFrame" title="Background gym music" allow="autoplay; encrypted-media" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0;"></iframe>
-        </div>
-    @endif
+
 
     <script>
     // Starfield
@@ -827,46 +862,165 @@
             setTimeout(()=>el.remove(), 400);
         });
     }, 5000);
+    
+    // Smooth Page Exit
+    window.addEventListener('beforeunload', () => {
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 0.25s ease';
+    });
 
-    @if(Auth::user()->role == 'trainee')
-    // Background gym music for trainees with confirmed sessions.
+    // YouTube-backed gym background music. Browsers allow the player to load on
+    // page load, but audible playback still needs the first user gesture.
     (function(){
-        const dock = document.getElementById('globalMusicDock');
-        const toggle = document.getElementById('globalMusicToggle');
-        const frame = document.getElementById('globalMusicFrame');
-        const title = document.getElementById('globalMusicTitle');
-        let song = null;
-        let playing = false;
+        const toggle = document.getElementById('musicToggle');
+        const STORAGE_KEY = 'virtugym-background-music';
+        const endpoint = @json(route('music.background'));
+        let player = null;
+        let videoId = null;
+        let isPlaying = false;
+        let enabled = localStorage.getItem(STORAGE_KEY) !== 'off';
 
-        function srcFor(videoId, shouldPlay) {
-            const origin = encodeURIComponent(window.location.origin);
-            return `https://www.youtube.com/embed/${videoId}?autoplay=${shouldPlay ? 1 : 0}&rel=0&controls=0&loop=1&playlist=${videoId}&enablejsapi=1&origin=${origin}`;
+        function refreshToggle() {
+            toggle?.classList.toggle('playing', enabled && isPlaying);
+            toggle?.setAttribute('aria-pressed', enabled && isPlaying ? 'true' : 'false');
+            toggle?.setAttribute('title', enabled ? 'Background music on' : 'Background music off');
         }
 
-        function setPlaying(next) {
-            if (!song) return;
-            playing = next;
-            frame.src = srcFor(song.video_id, playing);
-            toggle.innerHTML = playing ? '<i data-lucide="pause"></i>' : '<i data-lucide="music"></i>';
-            if (window.lucide) window.lucide.createIcons();
+        function loadYouTubeApi() {
+            if (window.YT && window.YT.Player) return Promise.resolve();
+            if (window.virtugymYouTubeApiPromise) return window.virtugymYouTubeApiPromise;
+
+            window.virtugymYouTubeApiPromise = new Promise(resolve => {
+                const previousReady = window.onYouTubeIframeAPIReady;
+                window.onYouTubeIframeAPIReady = function() {
+                    if (typeof previousReady === 'function') previousReady();
+                    resolve();
+                };
+
+                const script = document.createElement('script');
+                script.src = 'https://www.youtube.com/iframe_api';
+                document.head.appendChild(script);
+            });
+
+            return window.virtugymYouTubeApiPromise;
         }
 
-        fetch('{{ route('music.default') }}', { headers: { 'Accept': 'application/json' } })
-            .then(response => response.ok ? response.json() : null)
-            .then(data => {
-                if (!data || !data.song) return;
-                song = data.song;
-                title.textContent = song.title || 'Gym Music';
-                dock.style.display = 'flex';
-                setPlaying(true);
-            })
-            .catch(() => {});
+        async function getBackgroundVideoId() {
+            if (videoId) return videoId;
 
-        toggle.addEventListener('click', function(){
-            setPlaying(!playing);
+            try {
+                const response = await fetch(endpoint, {
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'same-origin',
+                });
+                const payload = await response.json();
+                videoId = payload?.song?.video_id || null;
+            } catch (error) {
+                videoId = null;
+            }
+
+            return videoId;
+        }
+
+        async function createPlayer() {
+            if (player) return player;
+
+            const nextVideoId = await getBackgroundVideoId();
+            if (!nextVideoId) return null;
+
+            await loadYouTubeApi();
+
+            player = new YT.Player('youtubeBackgroundPlayer', {
+                width: '1',
+                height: '1',
+                videoId: nextVideoId,
+                playerVars: {
+                    autoplay: 0,
+                    controls: 0,
+                    disablekb: 1,
+                    fs: 0,
+                    loop: 1,
+                    modestbranding: 1,
+                    playsinline: 1,
+                    playlist: nextVideoId,
+                    rel: 0,
+                },
+                events: {
+                    onReady: function(event) {
+                        event.target.setVolume(38);
+                        if (enabled) startMusic(false);
+                    },
+                    onStateChange: function(event) {
+                        if (event.data === YT.PlayerState.PLAYING) {
+                            isPlaying = true;
+                            refreshToggle();
+                        } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
+                            isPlaying = false;
+                            refreshToggle();
+                        }
+                    },
+                    onError: function() {
+                        isPlaying = false;
+                        refreshToggle();
+                    },
+                },
+            });
+
+            return player;
+        }
+
+        async function startMusic(force = false) {
+            if (!enabled && !force) return;
+            const nextPlayer = await createPlayer();
+            if (!nextPlayer || isPlaying || typeof nextPlayer.playVideo !== 'function') return;
+
+            try {
+                enabled = true;
+                localStorage.setItem(STORAGE_KEY, 'on');
+                nextPlayer.unMute();
+                nextPlayer.setVolume(38);
+                nextPlayer.playVideo();
+                isPlaying = true;
+                refreshToggle();
+            } catch (error) {
+                isPlaying = false;
+                refreshToggle();
+            }
+        }
+
+        function stopMusic() {
+            isPlaying = false;
+            if (player && typeof player.pauseVideo === 'function') {
+                player.pauseVideo();
+            }
+            refreshToggle();
+        }
+
+        toggle?.addEventListener('click', function(){
+            if (isPlaying) {
+                enabled = false;
+                localStorage.setItem(STORAGE_KEY, 'off');
+                stopMusic();
+            } else {
+                enabled = true;
+                localStorage.setItem(STORAGE_KEY, 'on');
+                startMusic(true);
+            }
+        });
+
+        function unlockFromGesture(event) {
+            if (toggle && event.target && toggle.contains(event.target)) return;
+            startMusic(false);
+        }
+
+        refreshToggle();
+        window.addEventListener('load', () => createPlayer());
+        ['pointerdown', 'keydown', 'touchstart'].forEach(eventName => {
+            window.addEventListener(eventName, unlockFromGesture, { passive: true });
         });
     })();
-    @endif
     </script>
+    @stack('modals')
+    @stack('scripts')
 </body>
 </html>

@@ -22,8 +22,10 @@ class User extends Authenticatable
         'bio', 'experience_years', 'specialization', 'hourly_rate', 
         'certifications', 'is_verified', 'rating', 'total_clients',
         // Payment fields
-        'razorpay_id', 'stripe_id',
-        'activity_visit_dates'
+        'razorpay_id', 'stripe_id', 'upi_id',
+        'activity_visit_dates',
+        // Goal tracking
+        'target_weight', 'target_body_fat'
     ];
     
     protected $hidden = [
@@ -32,6 +34,7 @@ class User extends Authenticatable
     
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'password' => 'hashed',
         'equipment' => 'array',
         'age' => 'integer',
         'weight' => 'float',
@@ -44,6 +47,8 @@ class User extends Authenticatable
         'rating' => 'float',
         'total_clients' => 'integer',
         'activity_visit_dates' => 'array',
+        'target_weight' => 'float',
+        'target_body_fat' => 'float',
     ];
     
     public function workouts()

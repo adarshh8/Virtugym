@@ -47,6 +47,14 @@
             @endif
         </div>
 
+        @if(($user->role ?? null) === 'trainee')
+            <div>
+                <x-input-label for="upi_id" :value="__('UPI ID for refunds')" />
+                <x-text-input id="upi_id" name="upi_id" type="text" class="mt-1 block w-full" :value="old('upi_id', $user->upi_id)" placeholder="name@upi" autocomplete="off" />
+                <x-input-error class="mt-2" :messages="$errors->get('upi_id')" />
+            </div>
+        @endif
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 
