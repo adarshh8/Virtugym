@@ -83,11 +83,37 @@ class TraineeDashboardController extends Controller
         ));
     }
     
-    public function trainers()
+    public function trainers(Request $request)
     {
-        // FIXED: Get ALL trainers
-        $trainers = User::where('role', 'trainer')
-            ->paginate(12);
+        $query = User::where('role', 'trainer');
+        
+        // Search by name or specialization
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('specialization', 'like', '%' . $search . '%');
+            });
+        }
+        
+        // Filter by specialization
+        if ($request->filled('specialization')) {
+            $query->where('specialization', 'like', '%' . $request->specialization . '%');
+        }
+        
+        // Filter by price range
+        if ($request->filled('price_range')) {
+            $priceRange = $request->price_range;
+            if ($priceRange === '0-500') {
+                $query->whereBetween('hourly_rate', [0, 500]);
+            } elseif ($priceRange === '501-1000') {
+                $query->whereBetween('hourly_rate', [501, 1000]);
+            } elseif ($priceRange === '1000+') {
+                $query->where('hourly_rate', '>=', 1000);
+            }
+        }
+        
+        $trainers = $query->paginate(12);
             
         return view('trainee.trainers', compact('trainers'));
     }
@@ -96,5 +122,26 @@ class TraineeDashboardController extends Controller
     {
         $trainer = User::findOrFail($id);
         return view('bookings.create', compact('trainer'));
+    }
+    
+    public function search(Request $request)
+    {
+        $query = $request->input('q', '');
+        
+        if (!$query || strlen($query) < 2) {
+            return redirect()->route('trainee.trainers')->with('info', 'Please enter at least 2 characters to search');
+        }
+        
+        // Search trainers by name or specialization
+        $trainers = User::where('role', 'trainer')
+            ->where(function($q) use ($query) {
+                $q->where('name', 'like', '%' . $query . '%')
+                  ->orWhere('specialization', 'like', '%' . $query . '%')
+                  ->orWhere('bio', 'like', '%' . $query . '%');
+            })
+            ->paginate(12)
+            ->appends(['search' => $query]);
+        
+        return view('trainee.trainers', compact('trainers', 'query'));
     }
 }

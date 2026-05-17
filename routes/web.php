@@ -47,6 +47,9 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
     Route::post('/payment-success', [BookingController::class, 'paymentSuccess'])->name('payment.success');
     Route::get('/payment-failed', [BookingController::class, 'paymentFailed'])->name('payment.failed');
     
+    // Search
+    Route::get('/search', [TraineeDashboardController::class, 'search'])->name('search');
+    
     // Chat
     Route::get('/chat/{trainer_id?}', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/messages/{trainer_id}', [ChatController::class, 'getMessages'])->name('chat.messages');
