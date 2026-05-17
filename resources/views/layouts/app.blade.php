@@ -688,9 +688,14 @@
 
                 @if(Auth::user()->role == 'trainee')
                 <!-- AI COACH SIDEBAR LINK -->
-                <a href="{{ route('ai.dashboard') }}" class="sidebar-item {{ request()->routeIs('ai.*') ? 'active' : '' }}">
+                <a href="{{ route('ai.dashboard') }}" class="sidebar-item {{ request()->routeIs('ai.dashboard') ? 'active' : '' }}">
                     <span class="s-icon"><i data-lucide="bot"></i></span>
                     <span>AI Coach</span>
+                </a>
+                
+                <a href="{{ route('ai.live-coach') }}" class="sidebar-item {{ request()->routeIs('ai.live-coach') ? 'active' : '' }}">
+                    <span class="s-icon"><i data-lucide="camera"></i></span>
+                    <span>Live Form Check</span>
                 </a>
 
                 <a href="{{ route('music.index') }}" class="sidebar-item {{ request()->routeIs('music.*') ? 'active' : '' }}">
@@ -698,6 +703,14 @@
                     <span>Workout Music</span>
                 </a>
                 @endif
+
+                <a href="{{ route('water.index') }}" class="sidebar-item {{ request()->routeIs('water.*') ? 'active' : '' }}">
+                    <span class="s-icon"><i data-lucide="droplets"></i></span><span>Water Tracker</span>
+                </a>
+
+                <a href="{{ route('mindfulness.index') }}" class="sidebar-item {{ request()->routeIs('mindfulness.*') ? 'active' : '' }}">
+                    <span class="s-icon"><i data-lucide="leaf"></i></span><span>Mindfulness</span>
+                </a>
 
                 @if(Auth::user()->role == 'trainer')
                 <a href="{{ route('trainer.availability.index') }}" class="sidebar-item {{ request()->routeIs('trainer.availability.*') ? 'active' : '' }}">
