@@ -572,10 +572,10 @@
             </a>
 
             <!-- Search Bar (Optional) -->
-            <div class="hidden md:flex items-center bg-gray-800/50 border border-gray-700 rounded-full px-4 py-1.5 ml-8 mr-auto max-w-sm w-full">
+            <form action="{{ route('search') }}" method="GET" class="hidden md:flex items-center bg-gray-800/50 border border-gray-700 rounded-full px-4 py-1.5 ml-8 mr-auto max-w-sm w-full">
                 <i data-lucide="search" class="w-4 h-4 text-gray-400 mr-2"></i>
-                <input type="text" placeholder="Search clients, bookings..." class="bg-transparent border-none text-sm text-white placeholder-gray-500 w-full focus:outline-none">
-            </div>
+                <input type="text" name="q" placeholder="Search clients, bookings..." class="bg-transparent border-none text-sm text-white placeholder-gray-500 w-full focus:outline-none" value="{{ request('q') }}" required>
+            </form>
 
             <div style="display:flex;align-items:center;gap:1.2rem;">
                 <button type="button" id="musicToggle" class="music-toggle" title="Toggle background music" aria-label="Toggle background music">

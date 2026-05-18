@@ -291,12 +291,20 @@
                                         @php
                                             $d = \Carbon\Carbon::parse($booking->session_date);
                                             $nowDate = now();
-                                            $diff = $nowDate->diff($d);
-                                            $countdown = '';
-                                            if ($d->diffInDays($nowDate) > 0) {
-                                                $countdown = 'Starts in ' . $d->diffInDays($nowDate) . 'd';
+                                            $totalMinutes = $nowDate->diffInMinutes($d);
+                                            $days = intdiv($totalMinutes, 1440); // 1440 minutes in a day
+                                            $remainingMinutes = $totalMinutes % 1440;
+                                            $hours = intdiv($remainingMinutes, 60);
+                                            $minutes = $remainingMinutes % 60;
+                                            
+                                            $countdown = 'Starts in ';
+                                            if ($days > 0) {
+                                                $countdown .= $days . 'd';
+                                                if ($hours > 0) {
+                                                    $countdown .= ' ' . $hours . 'h';
+                                                }
                                             } else {
-                                                $countdown = 'Starts in ' . $diff->h . 'h ' . $diff->i . 'm';
+                                                $countdown .= $hours . 'h ' . $minutes . 'm';
                                             }
                                         @endphp
                                         <div class="countdown-badge">
